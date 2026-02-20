@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -204,68 +205,69 @@ const GLOSSARY = [
     category: "Übungen — Oberkörper",
     color: "#5db8e8",
     entries: [
-      { term: "Weighted Pull-ups", full: null, desc: "Klimmzüge mit Zusatzgewicht (Gürtel oder Weste). DIE Schlüsselübung für Zugkraft beim Klettern. Schulterbreit, Handflächen weg." },
-      { term: "Pendelay Rows", full: null, desc: "Langhantelrudern von Glenn Pendlay. Stange liegt komplett am Boden, explosiv zur Brust rudern, kontrolliert ablegen. Baut massive Rückenbreite." },
-      { term: "Ring Dips", full: null, desc: "Dips an Turnringen statt festen Holmen. Die Instabilität der Ringe aktiviert mehr Stabilisatoren. Antagonist zu Zugbewegungen." },
-      { term: "Ring Push-ups", full: null, desc: "Liegestütze mit Händen auf Ringen. Deutlich anspruchsvoller als am Boden durch die Instabilität." },
-      { term: "One-Arm Pull-up Progressions", full: null, desc: "Stufenweises Heranarbeiten an einarmige Klimmzüge: Pulley-Unterstützung, exzentrische Einarmige, oder Gewichtsausgleich mit Seilzug." },
-      { term: "Ring Muscle-up", full: null, desc: "Aus dem Hang an Ringen über die Ringe drücken. Kombination aus Pull-up und Dip in einer explosiven Bewegung." },
-      { term: "Lat Pulldown", full: null, desc: "Latzug am Kabelturm. Gleiche Bewegung wie Pull-up, aber mit einstellbarem Gewicht. 'Wide Grip' = weiter als schulterbreit." },
-      { term: "Face Pulls", full: null, desc: "Am Kabelzug zur Stirn ziehen mit Seil. Stärkt hintere Schulter und Rotatorenmanschette. Essentiell für Schultergesundheit bei Kletterern." },
-      { term: "Schulterdrücken (DB)", full: "Dumbbell Shoulder Press", desc: "Kurzhanteln seitlich neben Kopf, nach oben drücken. Antagonist zum Klettern und wichtig für Schulterstabilität." },
-      { term: "Bizep Curls", full: null, desc: "Hammer-Curls (neutral grip) + supinierte Curls (Handflächen oben). EZ-Bar ist gelenkschonender als Langhantel." },
-      { term: "Wrist Roller", full: null, desc: "Gewicht an einer Schnur, die um eine Stange gewickelt ist. Auf- und abrollen trainiert die Unterarme intensiv." },
-      { term: "Reverse Wrist Curls", full: null, desc: "Handgelenk-Streckung mit leichter Hantel. Trainiert die Extensoren des Unterarms und beugt Kletterer-Ellbogen vor." },
-      { term: "YTWL", full: null, desc: "Vier Schulterstabilisations-Übungen: Arme in Y-, T-, W- und L-Position heben. Leicht, aber extrem effektiv für Prehab." },
-      { term: "Pronator/Supinator", full: null, desc: "Unterarmdrehung mit Hammer oder Keule. Stärkt die Drehmuskulatur und schützt den Ellbogen." },
+      { term: "Weighted Pull-ups", full: null, desc: "Klimmzüge mit Zusatzgewicht (Gürtel oder Weste). DIE Schlüsselübung für Zugkraft beim Klettern. Schulterbreit, Handflächen weg.", exec: "Schulterblätter zuerst nach unten ziehen, dann Arme beugen. Kinn über die Stange, dann 2-3s kontrolliert ablassen. Kein Schwingen oder Kipping — der Mehrwert liegt in der sauberen Ausführung." },
+      { term: "Pendelay Rows", full: null, desc: "Langhantelrudern von Glenn Pendlay. Stange liegt komplett am Boden, explosiv zur Brust rudern, kontrolliert ablegen. Baut massive Rückenbreite.", exec: "Rücken parallel zum Boden halten, nicht aufrichten. Stange explosiv zur unteren Brust ziehen, kurz halten, kontrolliert ablegen. Jede Rep startet vom toten Punkt — kein Bounce." },
+      { term: "Ring Dips", full: null, desc: "Dips an Turnringen statt festen Holmen. Die Instabilität der Ringe aktiviert mehr Stabilisatoren. Antagonist zu Zugbewegungen.", exec: "Ringe eng am Körper halten, Ellbogen nach hinten (nicht seitlich). Mindestens 90° Beugung, dann drücken bis Arme gestreckt. Ringe am oberen Punkt leicht nach außen drehen (RTO) für vollen Effekt." },
+      { term: "Ring Push-ups", full: null, desc: "Liegestütze mit Händen auf Ringen. Deutlich anspruchsvoller als am Boden durch die Instabilität.", exec: "Ringe auf Hüfthöhe einstellen. Körper gerade wie ein Brett, Ringe eng am Körper. Am tiefsten Punkt 1s halten, kontrolliert drücken. Wackeln ist normal — genau das trainiert die Stabilisatoren." },
+      { term: "One-Arm Pull-up Progressions", full: null, desc: "Stufenweises Heranarbeiten an einarmige Klimmzüge: Pulley-Unterstützung, exzentrische Einarmige, oder Gewichtsausgleich mit Seilzug.", exec: "Mit Pulley/Band starten: Gewicht schrittweise reduzieren. Exzentrisch: Oben mit zwei Armen starten, einarmig 5-8s ablassen. Schulter immer aktiv halten — nie im toten Hang hängen." },
+      { term: "One-Arm Lock-off", full: null, desc: "Einarmiges Halten in gebeugter Position (Lock-off). Baut isometrische Kraft für schwere Kletterzüge.", exec: "Mit beiden Armen hochziehen, dann einen Arm lösen und Position 3-5s halten. Schulterblatt aktiv nach unten ziehen, Körperspannung halten. Verschiedene Winkel trainieren (90°, 120°, oben)." },
+      { term: "Ring Muscle-up Progressions", full: null, desc: "Aus dem Hang an Ringen über die Ringe drücken. Kombination aus Pull-up und Dip in einer explosiven Bewegung.", exec: "False Grip ist Pflicht — Handgelenke über den Ringen. Explosiv ziehen, Ellbogen eng am Körper vorbeiführen, in den Dip übergehen. Transition üben: am tiefsten Punkt des Dips starten und stabilisieren." },
+      { term: "Wide Grip Lat Pulldown", full: "Latzug breit", desc: "Latzug am Kabelturm mit weitem Griff. Betont den äußeren Latissimus für Rückenbreite.", exec: "Griff 1.5× Schulterbreite, leicht zurücklehnen (max 15°). Zur oberen Brust ziehen, Schulterblätter zusammen, 1s halten. Kontrolliert zurück — kein Fallenlassen des Gewichts." },
+      { term: "Face Pulls", full: null, desc: "Am Kabelzug zur Stirn ziehen mit Seil. Stärkt hintere Schulter und Rotatorenmanschette. Essentiell für Schultergesundheit bei Kletterern.", exec: "Seil auf Gesichtshöhe einstellen. Mit beiden Händen zur Stirn ziehen, Ellbogen hoch, am Endpunkt nach außen rotieren. Leichtes Gewicht, Fokus auf Squeeze — nicht schwer und unsauber." },
+      { term: "Schulterdrücken (DB)", full: "Dumbbell Shoulder Press", desc: "Kurzhanteln seitlich neben Kopf, nach oben drücken. Antagonist zum Klettern und wichtig für Schulterstabilität.", exec: "Sitzend oder stehend, Hanteln auf Schulterhöhe. Kontrolliert nach oben drücken bis Arme fast gestreckt. Nicht im Hohlkreuz — Core anspannen. Ellbogen leicht vor dem Körper (Scapular Plane)." },
+      { term: "Bizep Curls", full: null, desc: "Hammer-Curls (neutral grip) + supinierte Curls (Handflächen oben). EZ-Bar ist gelenkschonender als Langhantel.", exec: "Ellbogen fest am Körper fixieren, nicht schwingen. Controlled: 2s hoch, 1s squeeze oben, 3s runter. Hammer-Curls (Daumen oben) trainieren zusätzlich den Brachioradialis im Unterarm." },
+      { term: "Wrist Roller", full: null, desc: "Gewicht an einer Schnur, die um eine Stange gewickelt ist. Auf- und abrollen trainiert die Unterarme intensiv.", exec: "Arme gestreckt vor dem Körper halten (oder auf Schulterhöhe). Abwechselnd eine Hand vor die andere, Gewicht aufrollen. Dann kontrolliert abrollen — das Ablassen ist genauso wichtig. Brennen ist normal und erwünscht." },
+      { term: "Reverse Wrist Curls", full: null, desc: "Handgelenk-Streckung mit leichter Hantel. Trainiert die Extensoren des Unterarms und beugt Kletterer-Ellbogen vor.", exec: "Unterarme auf Bank/Oberschenkel ablegen, Handflächen nach unten. Handgelenk langsam nach oben beugen, 1s halten, kontrolliert senken. Leichtes Gewicht — Sehnen brauchen lange zur Anpassung." },
+      { term: "YTWL", full: null, desc: "Vier Schulterstabilisations-Übungen: Arme in Y-, T-, W- und L-Position heben. Leicht, aber extrem effektiv für Prehab.", exec: "Bäuchlings auf Schrägbank oder stehend vorgebeugt. Arme in Y-Form heben (Daumen hoch), dann T, W und L. Sehr leichte Gewichte (0.5-2kg) oder nur Körpergewicht. Langsam und kontrolliert, Schulterblätter zusammenziehen." },
+      { term: "Pronator/Supinator", full: null, desc: "Unterarmdrehung mit Hammer oder Keule. Stärkt die Drehmuskulatur und schützt den Ellbogen.", exec: "Hammer am Griffende fassen, Unterarm auf Knie ablegen. Langsam nach innen drehen (Pronation), dann nach außen (Supination). Die Hebelwirkung des Hammerkopfs erzeugt den Widerstand. 12-15 Reps pro Richtung." },
     ],
   },
   {
     category: "Übungen — Finger & Board",
     color: "#e8c95d",
     entries: [
-      { term: "Repeaters", full: null, desc: "Intervall-Hangübung am Hangboard: z.B. 7s hängen / 3s Pause × 6 Reps = 1 Set. DAS Standard-Protokoll für Fingerkraft-Ausdauer und Hypertrophie." },
-      { term: "Max Hangs", full: null, desc: "Einmalige Hänger mit maximalem Zusatzgewicht (7-10s). Trainiert maximale Fingerkraft. Braucht lange Pausen (3-5min)." },
-      { term: "20mm Leiste", full: null, desc: "Standard-Testleiste am Hangboard (20mm tief). Quasi der 'Bench Press' der Kletterwelt. Die meisten Boards haben 20mm und kleinere Leisten." },
-      { term: "14mm Leiste", full: null, desc: "Schmalere Leiste am Hangboard. Deutlich anspruchsvoller als 20mm, trainiert spezifischere Fingerkraft." },
-      { term: "Offene Hand", full: "Open Hand Crimp", desc: "Griffhaltung mit gestreckten Fingergelenken. Schonender für die Gelenke und baut langfristig mehr Kraft auf als der geschlossene Aufsteller." },
-      { term: "Halbaufgestellt", full: "Half Crimp", desc: "Fingergelenke auf ~90° gebeugt, Daumen liegt NICHT auf. Guter Kompromiss zwischen Kraft und Gelenkschonung." },
-      { term: "Campus Board", full: null, desc: "Überhängendes Brett mit nummerierten Leisten. Training ohne Füße für explosive Fingerkraft und Kontaktkraft." },
-      { term: "Ladders (1-3-5-7)", full: null, desc: "Am Campusboard: abwechselnd Griffe hochgreifen (Leiste 1→3→5→7). Zahlen = Leistennummern von unten." },
-      { term: "Bumps & Touches", full: null, desc: "Campusboard-Übungen: Bumps = eine Hand eine Leiste höher nachsetzen. Touches = Leiste antippen und zurück." },
-      { term: "Systemboard", full: null, desc: "Kletterwand mit systematisch angeordneten Griffen verschiedener Typen. Erlaubt gezieltes Training spezifischer Griffkombinationen und Züge." },
+      { term: "Repeaters", full: null, desc: "Intervall-Hangübung am Hangboard: z.B. 7s hängen / 3s Pause × 6 Reps = 1 Set. DAS Standard-Protokoll für Fingerkraft-Ausdauer und Hypertrophie.", exec: "Schultern aktiv (nicht im toten Hang!), Ellbogen leicht gebeugt. Timer nutzen — Konsistenz ist wichtiger als Maximalkraft. Offene Hand bevorzugen, Intensität so dass Rep 5-6 sehr schwer wird." },
+      { term: "Max Hangs", full: null, desc: "Einmalige Hänger mit maximalem Zusatzgewicht (7-10s). Trainiert maximale Fingerkraft. Braucht lange Pausen (3-5min).", exec: "Gewichtsgurt anlegen, kontrolliert in den Hang gehen (nicht springen). 7-10s halten, Schultern aktiv, Fokus auf die Leiste. Wenn du 10s sauber schaffst → nächstes Mal 2.5kg mehr. Aufwärmen ist hier Pflicht!" },
+      { term: "20mm Leiste", full: null, desc: "Standard-Testleiste am Hangboard (20mm tief). Quasi der 'Bench Press' der Kletterwelt. Die meisten Boards haben 20mm und kleinere Leisten.", exec: "Vier-Finger-Auflage, Daumen nicht aufsetzen (Half Crimp) oder offene Hand. Handgelenk neutral halten. Die 20mm ist dein Benchmark — teste regelmäßig dein Max Hang Gewicht hier." },
+      { term: "14mm Leiste", full: null, desc: "Schmalere Leiste am Hangboard. Deutlich anspruchsvoller als 20mm, trainiert spezifischere Fingerkraft.", exec: "Nur wenn 20mm bereits solide ist (>+20% BW). Halb-aufgestellte Griffposition bevorzugen. Weniger Gewicht als bei 20mm — die schmale Leiste ist die Progression, nicht das Gewicht." },
+      { term: "Offene Hand", full: "Open Hand Crimp", desc: "Griffhaltung mit gestreckten Fingergelenken. Schonender für die Gelenke und baut langfristig mehr Kraft auf als der geschlossene Aufsteller.", exec: "Finger liegen flach auf der Leiste, Gelenke nicht gebeugt. Fühlt sich anfangs schwächer an als Crimp — das ist normal. Langfristig die sicherste und transferreichste Griffposition." },
+      { term: "Halbaufgestellt", full: "Half Crimp", desc: "Fingergelenke auf ~90° gebeugt, Daumen liegt NICHT auf. Guter Kompromiss zwischen Kraft und Gelenkschonung.", exec: "Erste Fingergelenke auf ~90° beugen, zweite Gelenke leicht gebeugt. Daumen NICHT über die Finger legen (das wäre Full Crimp). Häufigste Trainings-Griffposition am Board." },
+      { term: "Campus Board", full: null, desc: "Überhängendes Brett mit nummerierten Leisten. Training ohne Füße für explosive Fingerkraft und Kontaktkraft.", exec: "NUR mit gut aufgewärmten Fingern und Schultern. Füße hängen frei, Schwung aus Schulter und Lat generieren. Nicht geeignet bei Fingerverletzungen oder weniger als 1 Jahr Klettererfahrung." },
+      { term: "Ladders (1-3-5-7)", full: null, desc: "Am Campusboard: abwechselnd Griffe hochgreifen (Leiste 1→3→5→7). Zahlen = Leistennummern von unten.", exec: "Start auf Leiste 1, rechte Hand zu 3, linke zu 5, rechte zu 7 (oder umgekehrt). Schnell aber kontrolliert greifen — Kontaktkraft ist das Ziel. Immer beide Seiten trainieren." },
+      { term: "Bumps & Touches", full: null, desc: "Campusboard-Übungen: Bumps = eine Hand eine Leiste höher nachsetzen. Touches = Leiste antippen und zurück.", exec: "Bumps: Eine Hand lösen und eine Leiste höher nachsetzen. Touches: Leiste antippen und zur Ausgangsposition zurück. Touches sind schwerer — mehr Kontaktkraft und Bremskraft nötig." },
+      { term: "Systemboard", full: null, desc: "Kletterwand mit systematisch angeordneten Griffen verschiedener Typen. Erlaubt gezieltes Training spezifischer Griffkombinationen und Züge.", exec: "Probleme nach Schwächen zusammenstellen: z.B. nur Sloper, nur Leisten, nur Pockets. 3-6 Züge pro Problem, maximale Intensität. Pausen wie beim Limit Bouldering (3-5min)." },
     ],
   },
   {
     category: "Übungen — Core & Beine",
     color: "#c59dff",
     entries: [
-      { term: "L-Sit", full: null, desc: "An Barren/Ringen: Beine gestreckt waagerecht halten. Trainiert Hüftbeuger und gesamte Rumpfmuskulatur. Standard-Core-Übung fürs Klettern." },
-      { term: "Front Lever", full: null, desc: "Aus dem Hang waagerecht halten (Rücken nach unten). Progressionen: Tuck → Advanced Tuck → Straddle → Full. Extremer Core + Latissimus." },
-      { term: "Dragon Flags", full: null, desc: "Auf Bank liegend, Körper gestreckt von Schultern abheben. Bruce-Lee-Übung für brutale Core-Kraft." },
-      { term: "Hanging Leg Raises", full: null, desc: "Im Hang an der Stange: gestreckte Beine bis zur Stange heben. 'Toe-to-Bar' wenn Zehen die Stange berühren." },
-      { term: "Pallof Press", full: null, desc: "Anti-Rotationsübung am Kabelzug: Kabel seitlich, Griff vor die Brust drücken und halten. Trainiert seitliche Core-Stabilität." },
-      { term: "Ab Wheel Rollouts", full: null, desc: "Mit dem Bauchrad nach vorne ausrollen und zurück. Hervorragend für 'Body Tension' beim Klettern (Überhang!)." },
-      { term: "Planche Progressions", full: null, desc: "Stufenweise zum Planche (freistehender Liegestütz waagerecht). Trainiert extreme Push-Kraft und Core." },
-      { term: "Pistol Squats", full: null, desc: "Einbeinige Kniebeuge. Relevant für hohe Tritte und dynamische Züge beim Klettern. Wenn zu schwer: Bulgarian Split Squats als Alternative." },
-      { term: "Bulgarian Split Squats", full: null, desc: "Einbeinige Kniebeuge mit hinterem Fuß auf Bank erhöht. Leichter als Pistol Squats, gleicher Muskelaufbau." },
-      { term: "Romanian Deadlift (RDL)", full: null, desc: "Kreuzheben mit fast gestreckten Beinen. Trainiert die gesamte Körperrückseite (Posterior Chain): Hamstrings, Gesäß, unterer Rücken." },
-      { term: "Nordic Hamstring Curls", full: null, desc: "Knieend, Füße fixiert, Oberkörper langsam nach vorne fallen lassen und bremsen. Extrem effektiv für Hamstring-Kraft." },
-      { term: "Front Squats", full: null, desc: "Kniebeuge mit Langhantel vorne auf den Schultern. Aktiviert den Core stärker als Back Squats." },
+      { term: "L-Sit", full: null, desc: "An Barren/Ringen: Beine gestreckt waagerecht halten. Trainiert Hüftbeuger und gesamte Rumpfmuskulatur. Standard-Core-Übung fürs Klettern.", exec: "Hände neben den Hüften aufstützen, Schultern nach unten drücken. Beine gestreckt waagerecht halten. Anfänger: Knie gebeugt (Tuck L-Sit). Ziel: 15-20s Halten." },
+      { term: "Front Lever", full: null, desc: "Aus dem Hang waagerecht halten (Rücken nach unten). Progressionen: Tuck → Advanced Tuck → Straddle → Full. Extremer Core + Latissimus.", exec: "Schultern aktiv, Lats anspannen, Körper gerade wie ein Brett. Tuck: Knie zur Brust. Advanced Tuck: Knie 90°. Straddle: Beine gespreizt gestreckt. Hüfte nicht durchhängen lassen — lieber eine leichtere Progression sauber." },
+      { term: "Dragon Flags", full: null, desc: "Auf Bank liegend, Körper gestreckt von Schultern abheben. Bruce-Lee-Übung für brutale Core-Kraft.", exec: "Auf Bank legen, Kante hinter dem Kopf greifen. Körper gestreckt anheben (nur Schultern bleiben auf der Bank). Kontrolliert ablassen bis fast waagerecht — NICHT ins Hohlkreuz fallen. 3-5s exzentrisch." },
+      { term: "Hanging Leg Raises", full: null, desc: "Im Hang an der Stange: gestreckte Beine bis zur Stange heben. 'Toe-to-Bar' wenn Zehen die Stange berühren.", exec: "Schulteraktiv hängen, kein Schwingen. Beine gestreckt langsam nach oben — Zehen zur Stange. Kontrolliert ablassen. Zu schwer? Knie gebeugt starten. Kein Schwungholen!" },
+      { term: "Pallof Press", full: null, desc: "Anti-Rotationsübung am Kabelzug: Kabel seitlich, Griff vor die Brust drücken und halten. Trainiert seitliche Core-Stabilität.", exec: "Seitlich zum Kabelzug stehen, Griff an die Brust. Arme nach vorne strecken und 2-3s halten — der Zug des Kabels versucht dich zu drehen, Core hält dagegen. Hüfte und Schultern bleiben gerade." },
+      { term: "Ab Wheel Rollouts", full: null, desc: "Mit dem Bauchrad nach vorne ausrollen und zurück. Hervorragend für 'Body Tension' beim Klettern (Überhang!).", exec: "Auf den Knien starten, Rad greifen. Langsam nach vorne rollen, Hüfte gestreckt (nicht einknicken!). So weit wie möglich mit geradem Rücken, dann zurückrollen. Kein Hohlkreuz — das ist der häufigste Fehler." },
+      { term: "Planche Progressions", full: null, desc: "Stufenweise zum Planche (freistehender Liegestütz waagerecht). Trainiert extreme Push-Kraft und Core.", exec: "Tuck Planche: Knie zur Brust, Hände auf dem Boden, Füße anheben. Lean forward! Je weiter die Schultern vor den Händen, desto schwerer. Handgelenke aufwärmen — die Belastung ist enorm." },
+      { term: "Pistol Squats", full: null, desc: "Einbeinige Kniebeuge. Relevant für hohe Tritte und dynamische Züge beim Klettern. Wenn zu schwer: Bulgarian Split Squats als Alternative.", exec: "Standbein fest, anderes Bein gestreckt nach vorne. Langsam absenken, Knie über Zehenspitzen. Ferse bleibt am Boden. Arme nach vorne strecken für Balance. TRX-Band als Hilfe wenn nötig." },
+      { term: "Bulgarian Split Squats", full: null, desc: "Einbeinige Kniebeuge mit hinterem Fuß auf Bank erhöht. Leichter als Pistol Squats, gleicher Muskelaufbau.", exec: "Hinterer Fuß auf Bank (Spann auflegen), vorderer Fuß 60-80cm davor. Absenken bis hinteres Knie fast den Boden berührt. Oberkörper aufrecht, Core fest. Mit Hanteln in den Händen steigern." },
+      { term: "Romanian Deadlift (RDL)", full: null, desc: "Kreuzheben mit fast gestreckten Beinen. Trainiert die gesamte Körperrückseite (Posterior Chain): Hamstrings, Gesäß, unterer Rücken.", exec: "Stange/Hanteln an den Oberschenkeln, leichter Kniebeuge. Hüfte nach hinten schieben, Stange dicht am Bein entlang senken. Rücken GERADE halten — Tiefe kommt aus der Hüfte, nicht aus dem Rücken. Spannung in den Hamstrings spüren." },
+      { term: "Nordic Hamstring Curls", full: null, desc: "Knieend, Füße fixiert, Oberkörper langsam nach vorne fallen lassen und bremsen. Extrem effektiv für Hamstring-Kraft.", exec: "Knien, Füße unter Hantelstange oder von Partner fixieren. Oberkörper so langsam wie möglich nach vorne fallen lassen (Hüfte gestreckt!). Am Ende mit Händen abfangen. Zurück hochdrücken und wiederholen." },
+      { term: "Front Squats", full: null, desc: "Kniebeuge mit Langhantel vorne auf den Schultern. Aktiviert den Core stärker als Back Squats.", exec: "Stange auf vordere Schultern (Front Rack), Ellbogen hoch. Tief gehen (unter parallel), Rücken gerade, Ellbogen oben halten. Wenn Handgelenk-Mobilität fehlt: Crossed-Arms-Grip oder Straps nutzen." },
     ],
   },
   {
     category: "Klettertraining",
     color: "#2cb567",
     entries: [
-      { term: "Limit Bouldering", full: null, desc: "Bouldern an Problemen nahe oder über deinem aktuellen Maximum. Wenige Züge, maximale Intensität, volle Pausen (3-5min). DAS Krafttraining an der Wand." },
-      { term: "Volumen-Session", full: null, desc: "Viele Boulder deutlich unter dem Maximum klettern. Fokus auf Technik, Bewegungseffizienz und Grundlagen-Ausdauer." },
-      { term: "4×4s", full: null, desc: "4 Boulder hintereinander klettern (jeweils ~70% deines Max), 4min Pause, 4 Runden. Trainiert Kraft-Ausdauer und Klettern trotz Pump." },
-      { term: "Projekt-Session", full: null, desc: "Fokussiertes Arbeiten an 2-4 Bouldern die du noch nicht geschafft hast. Züge lernen, verknüpfen und senden." },
-      { term: "Flash-Level", full: null, desc: "Der Grad, den du beim ersten Versuch (Flash) oder zweiten Go schaffst. Dein 'Arbeitslevel'." },
-      { term: "Send / Senden", full: null, desc: "Einen Boulder oder eine Route komplett durchsteigen. 'Send-Session' = Session mit dem Ziel, Projekte abzuschließen." },
-      { term: "Pyramide (Aufwärmen)", full: null, desc: "Stufenweise hocharbeiten: z.B. 2× leicht, 2× mittel, 1× Flash-Level. Systematisches Aufwärmen das Verletzungen vorbeugt." },
-      { term: "Pump", full: null, desc: "Anschwellen und Verhärten der Unterarme durch Laktat-Ansammlung. 'Klettern trotz Pump' ist eine trainierbare Fähigkeit." },
+      { term: "Limit Bouldering", full: null, desc: "Bouldern an Problemen nahe oder über deinem aktuellen Maximum. Wenige Züge, maximale Intensität, volle Pausen (3-5min). DAS Krafttraining an der Wand.", exec: "Max 3-5 Züge pro Problem, Versuche auf 3-5 begrenzen. Vollständig ausruhen zwischen Versuchen (kein Pump!). Qualität vor Quantität — lieber 8 perfekte Versuche als 20 halbherzige." },
+      { term: "Volumen-Session", full: null, desc: "Viele Boulder deutlich unter dem Maximum klettern. Fokus auf Technik, Bewegungseffizienz und Grundlagen-Ausdauer.", exec: "2-3 Grade unter Flash-Level. Auf Technik achten: stille Füße, präzise Platzierung, Gleichgewicht über den Füßen. Nicht bis zum Pump klettern — wenn die Unterarme dicht machen, Pause." },
+      { term: "4×4s", full: null, desc: "4 Boulder hintereinander klettern (jeweils ~70% deines Max), 4min Pause, 4 Runden. Trainiert Kraft-Ausdauer und Klettern trotz Pump.", exec: "4 Boulder auswählen die du sicher schaffst (~70% Max). Alle 4 direkt hintereinander klettern ohne Pause. Dann 4min Pause. 4 Runden. Boulder vorher festlegen — kein Suchen während des Sets." },
+      { term: "Projekt-Session", full: null, desc: "Fokussiertes Arbeiten an 2-4 Bouldern die du noch nicht geschafft hast. Züge lernen, verknüpfen und senden.", exec: "Erst alle Züge einzeln lernen (beta lesen), dann verknüpfen (linking), dann Durchstiegsversuche. Max 3-4 Projekte pro Session. Go wenn du frisch bist, nicht wenn du schon müde bist." },
+      { term: "Flash-Level", full: null, desc: "Der Grad, den du beim ersten Versuch (Flash) oder zweiten Go schaffst. Dein 'Arbeitslevel'.", exec: "Kenne deinen Flash-Level — er ist der wichtigste Indikator für deine aktuelle Form. Alles 2+ Grade darüber = Projekt. Alles 2+ Grade darunter = Volumen." },
+      { term: "Send / Senden", full: null, desc: "Einen Boulder oder eine Route komplett durchsteigen. 'Send-Session' = Session mit dem Ziel, Projekte abzuschließen.", exec: "Go nur wenn du dich frisch und motiviert fühlst. Aufwärmen ist Pflicht. Visualisiere den gesamten Boulder vor dem Versuch. Nur 2-3 ernsthafte Send-Versuche pro Projekt pro Session." },
+      { term: "Pyramide (Aufwärmen)", full: null, desc: "Stufenweise hocharbeiten: z.B. 2× leicht, 2× mittel, 1× Flash-Level. Systematisches Aufwärmen das Verletzungen vorbeugt.", exec: "2 leichte Boulder → 2 mittlere → 1 nahe Flash-Level. Finger, Schultern und Handgelenke vorher mobilisieren. Mindestens 15-20min. Nie kalt in schwere Boulder einsteigen!" },
+      { term: "Pump", full: null, desc: "Anschwellen und Verhärten der Unterarme durch Laktat-Ansammlung. 'Klettern trotz Pump' ist eine trainierbare Fähigkeit.", exec: "Beim Pump: Arme lang machen, schütteln, Atmung bewusst einsetzen. Trainierbar durch 4×4s und ARC-Training. Unterscheide 'Trainings-Pump' (gewollt) und 'Flash-Pump' (zu schnell zu viel → aufwärmen!)." },
     ],
   },
   {
@@ -498,8 +500,9 @@ const generateWeeklyPlan = (week, assessment) => {
             { name: "Schulterdrücken (DB)", sets: 3, reps: "8-10", rest: "2min", note: "Antagonist-Training" },
             { name: "Pendelay Rows", sets: 4, reps: "6-8", rest: "2.5min", note: "Explosiv hoch, kontrolliert ab" },
             { name: "Ring Dips", sets: 3, reps: "8-12", rest: "2min", note: "Volle ROM" },
+            { name: "Wrist Roller", sets: 4, reps: "2 auf/ab", rest: "90s", note: "Unterarm Hypertrophie — Fokus!" },
+            { name: "Reverse Wrist Curls", sets: 3, reps: "15", rest: "60s", note: "Extensoren + Verletzungsprophylaxe" },
             { name: "Bizep Curls", sets: 3, reps: "10-12", rest: "90s", note: "Hammer + Supiniert" },
-            { name: "Reverse Wrist Curls", sets: 3, reps: "15", rest: "60s", note: "Verletzungsprophylaxe" },
           ]
         },
         {
@@ -507,6 +510,7 @@ const generateWeeklyPlan = (week, assessment) => {
           exercises: [
             { name: "Repeaters (20mm)", sets: 6, reps: "7s on/3s off × 6", rest: "3min", note: "~70% max, offene Hand" },
             { name: "Repeaters (14mm)", sets: 4, reps: "7s on/3s off × 4", rest: "3min", note: "Halbaufgestellt" },
+            { name: "Wrist Roller", sets: 3, reps: "2 auf/ab", rest: "90s", note: "Auch am Board-Tag — Unterarme sollen brennen" },
             { name: "Front Lever Progressions", sets: 4, reps: "5-8s Hold", rest: "2min", note: "Tuck → Advanced Tuck" },
             { name: "Hanging Leg Raises", sets: 3, reps: "10-12", rest: "90s", note: "Gestreckt bis Zehen zur Stange" },
             { name: "Pallof Press", sets: 3, reps: "10/Seite", rest: "60s", note: "Anti-Rotation" },
@@ -526,6 +530,7 @@ const generateWeeklyPlan = (week, assessment) => {
             { name: "Ring Push-ups", sets: 3, reps: "10-15", rest: "90s", note: "Antagonist" },
             { name: "Wide Grip Lat Pulldown", sets: 4, reps: "8-10", rest: "2min", note: "Pausen-Reps am unteren Punkt" },
             { name: "Face Pulls", sets: 3, reps: "15", rest: "60s", note: "Externe Rotation, Schultergesundheit" },
+            { name: "Repeaters (20mm)", sets: 4, reps: "7s on/3s off × 6", rest: "2.5min", note: "Leichte Fingerarbeit auch am Gym-Tag" },
             { name: "Wrist Roller", sets: 3, reps: "2 auf/ab", rest: "90s", note: "Unterarm Hypertrophie" },
             { name: "Pronator/Supinator", sets: 2, reps: "12", rest: "60s", note: "Ellbogenprophylaxe" },
           ]
@@ -545,6 +550,7 @@ const generateWeeklyPlan = (week, assessment) => {
             { name: "Pistol Squats (oder Bulgarian Split Squats)", sets: 3, reps: "8/Seite", rest: "2min", note: "Kletterrelevante Beinkraft" },
             { name: "Romanian Deadlift", sets: 3, reps: "8-10", rest: "2min", note: "Posterior Chain" },
             { name: "Ab Wheel Rollouts", sets: 3, reps: "8-12", rest: "90s", note: "Core Compression" },
+            { name: "Reverse Wrist Curls", sets: 3, reps: "15-20", rest: "60s", note: "Leichte Unterarm-Extensoren am Beintag" },
             { name: "Planche Progressions", sets: 3, reps: "15-20s", rest: "2min", note: "Push-Kraft" },
             { name: "Yoga/Mobility Flow", sets: 1, reps: "20min", rest: "-", note: "Hip openers, Schulter-Mobility" },
           ]
@@ -565,6 +571,7 @@ const generateWeeklyPlan = (week, assessment) => {
             { name: "Weighted Pull-ups", sets: 5, reps: "4-6", rest: "3.5min", note: "+5-10% vs Phase I" },
             { name: "Pendelay Rows", sets: 4, reps: "5-7", rest: "3min", note: "Schwerer als Phase I" },
             { name: "Max Hangs (20mm)", sets: 5, reps: "10s", rest: "3min", note: "+Gewicht alle 2 Wochen" },
+            { name: "Wrist Roller", sets: 4, reps: "2 auf/ab", rest: "90s", note: "Schwerer als Phase I — Unterarm-Fokus bleibt" },
             { name: "Bizep Curls (schwer)", sets: 3, reps: "6-8", rest: "2min", note: "EZ-Bar oder Langhantel" },
             { name: "Reverse Wrist Curls", sets: 3, reps: "12-15", rest: "60s", note: "Prophylaxe" },
           ]
@@ -592,6 +599,7 @@ const generateWeeklyPlan = (week, assessment) => {
             { name: "Schulterdrücken", sets: 3, reps: "6-8", rest: "2min", note: "Antagonist" },
             { name: "Superset: Lat Pulldown + Ring Dips", sets: 4, reps: "8+8", rest: "2.5min", note: "Agonist/Antagonist" },
             { name: "Repeaters (14mm)", sets: 5, reps: "7/3 × 5", rest: "3min", note: "+Gewicht wenn möglich" },
+            { name: "Wrist Roller", sets: 3, reps: "2 auf/ab", rest: "90s", note: "Unterarm-Volumen bleibt hoch" },
             { name: "Core Circuit", sets: 3, reps: "3 Übungen", rest: "90s", note: "L-Sit, Leg Raise, Pallof" },
           ]
         },
@@ -770,9 +778,69 @@ function App() {
   const [checkedMeals, setCheckedMeals] = useState({});
   const [setProgress, setSetProgress] = useState({}); // { "1-0-2": 3 } = week1, day0, ex2 → 3 sets done
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [glossaryHighlight, setGlossaryHighlight] = useState(null);
   const [loaded, setLoaded] = useState(false);
   const [saveStatus, setSaveStatus] = useState("");
   const [timer, setTimer] = useState({ active: false, seconds: 0, total: 0, exercise: "", exKey: "" });
+
+  // Hangboard Timer State
+  const GRIP_OPTIONS = ["Half-Crimp 20mm","Open Hand 20mm","Three-Finger Drag","Full Crimp 14mm","Slope 35mm","Pinch Block","Jug (Warm-up)","Custom"];
+  const HB_PRESETS = [
+    { n:"Max Hangs", sets:5, hang:10, rest:180, desc:"5×10s / 3min", g:["Half-Crimp 20mm","Open Hand 20mm","Full Crimp 14mm","Half-Crimp 20mm","Open Hand 20mm"] },
+    { n:"Repeaters", sets:6, hang:7, rest:3, desc:"6×7s / 3s", g:["Half-Crimp 20mm","Half-Crimp 20mm","Half-Crimp 20mm","Open Hand 20mm","Open Hand 20mm","Open Hand 20mm"] },
+    { n:"Abrahangs", sets:10, hang:10, rest:50, desc:"10×10s / 50s (Füße am Boden)", g:["Half-Crimp 20mm","Open Hand 20mm","Three-Finger Drag","Half-Crimp 20mm","Open Hand 20mm","Three-Finger Drag","Half-Crimp 20mm","Open Hand 20mm","Three-Finger Drag","Half-Crimp 20mm"] },
+    { n:"Endurance", sets:8, hang:7, rest:3, desc:"8×7s / 3s", g:["Half-Crimp 20mm","Open Hand 20mm","Half-Crimp 20mm","Open Hand 20mm","Half-Crimp 20mm","Open Hand 20mm","Half-Crimp 20mm","Open Hand 20mm"] },
+  ];
+  const [hb, setHb] = useState({ sets:6, hang:10, rest:20, grips:["Half-Crimp 20mm","Open Hand 20mm","Three-Finger Drag","Half-Crimp 20mm","Open Hand 20mm","Three-Finger Drag"] });
+  const [hbRun, setHbRun] = useState({ running:false, paused:false, phase:"ready", set:0, timeLeft:0, totalTime:0 });
+  const hbRef = useRef(null);
+
+  const hbSyncGrips = (sets, grips) => {
+    const g = [...grips];
+    while(g.length < sets) g.push(GRIP_OPTIONS[g.length % 6]);
+    return g.slice(0, sets);
+  };
+
+  const hbBeep = (freq, dur) => {
+    try { const ac = new (window.AudioContext||window.webkitAudioContext)(); const o=ac.createOscillator(); const g=ac.createGain(); o.connect(g); g.connect(ac.destination); o.frequency.value=freq; o.type="sine"; g.gain.value=0.3; o.start(); o.stop(ac.currentTime+dur/1000); g.gain.exponentialRampToValueAtTime&&g.gain.exponentialRampToValueAtTime(0.01,ac.currentTime+dur/1000); } catch(e){}
+  };
+
+  const hbStart = () => {
+    if(hbRun.running && hbRun.paused) { setHbRun(p=>({...p, paused:false})); return; }
+    if(hbRun.running) return;
+    hbBeep(880,150);
+    setHbRun({ running:true, paused:false, phase:"hang", set:1, timeLeft:hb.hang, totalTime:hb.hang });
+  };
+  const hbPause = () => { setHbRun(p=>({...p, paused:true})); };
+  const hbStop = () => { if(hbRef.current) clearInterval(hbRef.current); setHbRun({ running:false, paused:false, phase:"ready", set:0, timeLeft:0, totalTime:0 }); };
+
+  useEffect(() => {
+    if(hbRef.current) clearInterval(hbRef.current);
+    if(!hbRun.running || hbRun.paused) return;
+    hbRef.current = setInterval(() => {
+      setHbRun(prev => {
+        if(prev.paused || !prev.running) return prev;
+        const next = prev.timeLeft - 1;
+        if(next <= 3 && next > 0) hbBeep(660, 80);
+        if(next <= 0) {
+          if(prev.phase === "hang") {
+            if(prev.set >= hb.sets) {
+              clearInterval(hbRef.current);
+              hbBeep(440,300); setTimeout(()=>hbBeep(660,300),350); setTimeout(()=>hbBeep(880,400),750);
+              return { ...prev, phase:"done", running:false, timeLeft:0 };
+            }
+            hbBeep(440,200);
+            return { ...prev, phase:"rest", timeLeft:hb.rest, totalTime:hb.rest };
+          } else {
+            hbBeep(880,150);
+            return { ...prev, phase:"hang", set:prev.set+1, timeLeft:hb.hang, totalTime:hb.hang };
+          }
+        }
+        return { ...prev, timeLeft: next };
+      });
+    }, 1000);
+    return () => { if(hbRef.current) clearInterval(hbRef.current); };
+  }, [hbRun.running, hbRun.paused, hb.sets, hb.hang, hb.rest]);
 
   // Timer logic
   const parseRestTime = (rest) => {
@@ -935,6 +1003,70 @@ function App() {
 
   const weekPlan = generateWeeklyPlan(selectedWeek, assessment);
 
+  // Glossary lookup: find entry by exercise name
+  const findGlossaryTerm = (exName) => {
+    const name = exName.toLowerCase();
+    for (const section of GLOSSARY) {
+      for (const entry of section.entries) {
+        const term = entry.term.toLowerCase();
+        if (name.includes(term) || term.includes(name.split(" (")[0].toLowerCase())) return entry.term;
+        // Partial matches
+        if (name.includes("repeater") && term.includes("repeater")) return entry.term;
+        if (name.includes("max hang") && term.includes("max hang")) return entry.term;
+        if (name.includes("campus") && term.includes("campus board")) return entry.term;
+        if (name.includes("ladder") && term.includes("ladder")) return entry.term;
+        if (name.includes("bump") && term.includes("bump")) return entry.term;
+        if (name.includes("systemboard") && term.includes("systemboard")) return entry.term;
+        if (name.includes("pull-up") && term === "weighted pull-ups" && name.includes("weighted")) return entry.term;
+        if (name.includes("one-arm pull-up") && term.includes("one-arm pull-up")) return entry.term;
+        if (name.includes("lock-off") && term.includes("lock-off")) return entry.term;
+        if (name.includes("lat pulldown") && term.includes("lat pulldown")) return entry.term;
+        if (name.includes("muscle-up") && term.includes("muscle-up")) return entry.term;
+        if (name.includes("pistol") && term.includes("pistol")) return entry.term;
+        if (name.includes("bulgarian") && term.includes("bulgarian")) return entry.term;
+        if (name.includes("deadlift") && term.includes("deadlift")) return entry.term;
+        if (name.includes("dragon") && term.includes("dragon")) return entry.term;
+        if (name.includes("front lever") && term.includes("front lever")) return entry.term;
+        if (name.includes("planche") && term.includes("planche")) return entry.term;
+        if (name.includes("front squat") && term.includes("front squat")) return entry.term;
+        if (name.includes("nordic") && term.includes("nordic")) return entry.term;
+        if (name.includes("wrist roller") && term.includes("wrist roller")) return entry.term;
+        if (name.includes("reverse wrist") && term.includes("reverse wrist")) return entry.term;
+        if (name.includes("pronator") && term.includes("pronator")) return entry.term;
+        if (name.includes("ytwl") && term.includes("ytwl")) return entry.term;
+        if (name.includes("ring dip") && term.includes("ring dip")) return entry.term;
+        if (name.includes("ring push") && term.includes("ring push")) return entry.term;
+        if (name.includes("face pull") && term.includes("face pull")) return entry.term;
+        if (name.includes("schulterdr") && term.includes("schulterdr")) return entry.term;
+        if (name.includes("bizep") && term.includes("bizep")) return entry.term;
+        if (name.includes("pendelay") && term.includes("pendelay")) return entry.term;
+        if (name.includes("ab wheel") && term.includes("ab wheel")) return entry.term;
+        if (name.includes("pallof") && term.includes("pallof")) return entry.term;
+        if (name.includes("hanging leg") && term.includes("hanging leg")) return entry.term;
+        if (name.includes("l-sit") && term.includes("l-sit")) return entry.term;
+        if (name.includes("limit boulder") && term.includes("limit boulder")) return entry.term;
+        if (name.includes("volumen-session") && term.includes("volumen")) return entry.term;
+        if (name.includes("4×4") && term.includes("4×4")) return entry.term;
+        if (name.includes("projekt") && term.includes("projekt")) return entry.term;
+        if (name.includes("send") && term.includes("send")) return entry.term;
+        if (name.includes("pyramide") && term.includes("pyramide")) return entry.term;
+      }
+    }
+    return null;
+  };
+
+  const navigateToGlossary = (exName) => {
+    const term = findGlossaryTerm(exName);
+    if (term) {
+      setGlossaryHighlight(term);
+      setView("glossary");
+      setTimeout(() => {
+        const el = document.getElementById(`glossary-${term.replace(/[\s\/()]/g, "-")}`);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 100);
+    }
+  };
+
   const progressData = Array.from({ length: 12 }, (_, i) => {
     const w = i + 1;
     const d = weeklyData[w] || {};
@@ -1044,6 +1176,7 @@ function App() {
             { id: "plan", label: "TRAINING" },
             { id: "nutrition", label: "ERNÄHRUNG" },
             { id: "progress", label: "FORTSCHRITT" },
+            { id: "hbtimer", label: "⏱ TIMER" },
             { id: "glossary", label: "LEGENDE" },
           ].map(tab => (
             <button
@@ -1484,15 +1617,33 @@ function App() {
                                 {isComplete && "✓"}
                               </div>
 
-                              {/* Name + note */}
+                              {/* Name + note + info */}
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{
-                                  fontSize: "11px", fontWeight: 500,
-                                  color: isComplete ? "#555" : "#ddd",
-                                  textDecoration: isComplete ? "line-through" : "none",
-                                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                                  display: "flex", alignItems: "center", gap: "5px",
                                 }}>
-                                  {ex.name}
+                                  <span style={{
+                                    fontSize: "11px", fontWeight: 500,
+                                    color: isComplete ? "#555" : "#ddd",
+                                    textDecoration: isComplete ? "line-through" : "none",
+                                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                                  }}>
+                                    {ex.name}
+                                  </span>
+                                  {findGlossaryTerm(ex.name) && (
+                                    <span
+                                      onClick={(e) => { e.stopPropagation(); navigateToGlossary(ex.name); }}
+                                      style={{
+                                        width: "15px", height: "15px", borderRadius: "50%",
+                                        background: "#1f2225", border: "1px solid #333",
+                                        display: "inline-flex", alignItems: "center", justifyContent: "center",
+                                        fontSize: "9px", fontWeight: 700, fontStyle: "italic",
+                                        color: "#666", cursor: "pointer", flexShrink: 0,
+                                        fontFamily: "Georgia, serif",
+                                        transition: "all 0.15s",
+                                      }}
+                                    >i</span>
+                                  )}
                                 </div>
                                 {ex.note && (
                                   <div style={{ fontSize: "9px", color: "#4a4d53", marginTop: "1px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ex.note}</div>
@@ -2234,13 +2385,178 @@ function App() {
           </div>
         )}
 
+        {/* HANGBOARD TIMER VIEW */}
+        {view === "hbtimer" && (
+          <div>
+            <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "18px", fontWeight: 600, color: "#e85d26", margin: "0 0 4px" }}>
+              ⏱ Hangboard Timer
+            </h2>
+            <p style={{ fontSize: "11px", color: "#666", margin: "0 0 20px" }}>
+              Konfiguriere Sets, Hang-/Pausenzeit und Griffarten pro Set
+            </p>
+
+            {!hbRun.running && hbRun.phase !== "done" ? (
+              <div>
+                {/* SETUP: Sets, Hang, Rest */}
+                {[
+                  { label: "Sets", val: hb.sets, unit: "", min: 1, max: 20, step: 1, key: "sets" },
+                  { label: "Hang-Zeit", val: hb.hang, unit: "s", min: 3, max: 120, step: hb.hang >= 10 ? 5 : 1, key: "hang" },
+                  { label: "Pause", val: hb.rest, unit: "s", min: 3, max: 300, step: hb.rest >= 15 ? 5 : 1, key: "rest" },
+                ].map(r => (
+                  <div key={r.key} style={{ display: "flex", alignItems: "center", gap: "12px", background: "#13151a", border: "1px solid #1f2225", borderRadius: "10px", padding: "12px 16px", marginBottom: "8px" }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: "11px", fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.5px" }}>{r.label}</div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
+                      <button onClick={() => { if(r.val > r.min) { const nv = Math.max(r.min, r.val - r.step); setHb(p => { const u = {...p, [r.key]: nv}; if(r.key==="sets") u.grips = hbSyncGrips(nv, p.grips); return u; }); }}} style={{ width: 42, height: 42, border: "1px solid #2a2d33", background: "#1a1c20", color: "#ccc", fontSize: 20, fontWeight: 700, cursor: "pointer", borderRadius: "8px 0 0 8px", fontFamily: "inherit" }}>−</button>
+                      <div style={{ width: 60, height: 42, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 800, background: "#0e0f14", borderTop: "1px solid #2a2d33", borderBottom: "1px solid #2a2d33", color: "#e85d26" }}>{r.val}{r.unit}</div>
+                      <button onClick={() => { if(r.val < r.max) { const nv = Math.min(r.max, r.val + r.step); setHb(p => { const u = {...p, [r.key]: nv}; if(r.key==="sets") u.grips = hbSyncGrips(nv, p.grips); return u; }); }}} style={{ width: 42, height: 42, border: "1px solid #2a2d33", background: "#1a1c20", color: "#ccc", fontSize: 20, fontWeight: 700, cursor: "pointer", borderRadius: "0 8px 8px 0", fontFamily: "inherit" }}>+</button>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Total time */}
+                {(() => { const t = hb.sets * hb.hang + (hb.sets - 1) * hb.rest; const m = Math.floor(t/60); const s = t%60; return (
+                  <div style={{ textAlign: "center", fontSize: "12px", color: "#666", margin: "12px 0 20px" }}>
+                    Gesamtdauer: <span style={{ color: "#e85d26", fontWeight: 700 }}>{m}m {String(s).padStart(2,"0")}s</span>
+                  </div>
+                );})()}
+
+                {/* GRIP SELECTION */}
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+                  <span style={{ fontSize: "10px", fontWeight: 700, color: "#e85d26", letterSpacing: "1.5px" }}>GRIFFARTEN PRO SET</span>
+                  <div style={{ flex: 1, height: "1px", background: "#1f2225" }} />
+                </div>
+                {hbSyncGrips(hb.sets, hb.grips).map((g, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px", background: "#13151a", border: "1px solid #1f2225", borderRadius: "10px", padding: "8px 12px", marginBottom: "6px" }}>
+                    <div style={{ width: 28, height: 28, borderRadius: 14, background: "#e85d26", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, flexShrink: 0 }}>{i+1}</div>
+                    <select value={g} onChange={e => { const ng = [...hb.grips]; ng[i] = e.target.value; setHb(p=>({...p, grips: ng})); }} style={{ flex: 1, background: "#0e0f14", border: "1px solid #2a2d33", borderRadius: "6px", color: "#ccc", padding: "8px", fontSize: "13px", fontFamily: "inherit" }}>
+                      {GRIP_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                  </div>
+                ))}
+
+                {/* PRESETS */}
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", margin: "20px 0 12px" }}>
+                  <span style={{ fontSize: "10px", fontWeight: 700, color: "#e85d26", letterSpacing: "1.5px" }}>PRESETS</span>
+                  <div style={{ flex: 1, height: "1px", background: "#1f2225" }} />
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "20px" }}>
+                  {HB_PRESETS.map(p => (
+                    <button key={p.n} onClick={() => setHb({ sets: p.sets, hang: p.hang, rest: p.rest, grips: hbSyncGrips(p.sets, p.g) })} style={{ padding: "14px 12px", background: "#13151a", border: "1px solid #1f2225", borderRadius: "10px", color: "#ccc", cursor: "pointer", textAlign: "left", fontFamily: "inherit" }}>
+                      <div style={{ fontSize: "13px", fontWeight: 700, color: "#fff" }}>{p.n}</div>
+                      <div style={{ fontSize: "10px", color: "#666", marginTop: "3px" }}>{p.desc}</div>
+                    </button>
+                  ))}
+                </div>
+
+                {/* START BUTTON */}
+                <button onClick={hbStart} style={{ width: "100%", padding: "20px", background: "#e85d26", color: "#fff", border: "none", borderRadius: "12px", fontSize: "18px", fontWeight: 800, cursor: "pointer", fontFamily: "inherit", letterSpacing: "1px" }}>
+                  ▶  Timer starten
+                </button>
+              </div>
+            ) : (
+              <div>
+                {/* RUNNING DISPLAY */}
+                {(() => {
+                  const isHang = hbRun.phase === "hang";
+                  const isDone = hbRun.phase === "done";
+                  const col = isHang ? "#e85d26" : isDone ? "#4361ee" : "#06d6a0";
+                  const label = isHang ? "HANG" : isDone ? "FERTIG" : "PAUSE";
+                  const pct = hbRun.totalTime > 0 ? ((hbRun.totalTime - hbRun.timeLeft) / hbRun.totalTime * 100) : 0;
+                  const currentGrip = hbRun.set > 0 && hbRun.set <= hb.grips.length ? hb.grips[hbRun.set - 1] : "";
+                  const nextGrip = hbRun.set < hb.sets && hbRun.set < hb.grips.length ? hb.grips[hbRun.set] : "";
+
+                  return (
+                    <div>
+                      {/* Main display */}
+                      <div style={{
+                        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                        padding: "40px 20px", borderRadius: "16px", minHeight: 300,
+                        border: `2px solid ${col}40`,
+                        background: `linear-gradient(135deg, ${col}15, ${col}05)`,
+                        transition: "all 0.3s",
+                      }}>
+                        <div style={{ fontSize: "14px", fontWeight: 800, letterSpacing: "4px", textTransform: "uppercase", color: col, marginBottom: "8px" }}>{label}</div>
+                        {isDone ? (
+                          <>
+                            <div style={{ fontSize: 56, marginTop: 10 }}>✓</div>
+                            <div style={{ fontSize: 16, color: "#888", marginTop: 12 }}>{hb.sets} Sets abgeschlossen!</div>
+                          </>
+                        ) : (
+                          <>
+                            <div style={{ fontSize: 86, fontWeight: 900, color: col, fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>{hbRun.timeLeft}</div>
+                            <div style={{ fontSize: 16, fontWeight: 700, color: col, marginTop: 10 }}>{currentGrip}</div>
+                            <div style={{ fontSize: 13, color: "#666", fontWeight: 600, marginTop: 8 }}>Set {hbRun.set} / {hb.sets}</div>
+                            {/* Phase progress bar */}
+                            <div style={{ width: "80%", height: 6, background: "#1a1c20", borderRadius: 3, overflow: "hidden", marginTop: 16 }}>
+                              <div style={{ height: "100%", borderRadius: 3, background: col, width: `${pct}%`, transition: "width 0.3s linear" }} />
+                            </div>
+                          </>
+                        )}
+                        {/* Set dots */}
+                        <div style={{ display: "flex", gap: 5, marginTop: 16, justifyContent: "center", flexWrap: "wrap" }}>
+                          {Array.from({ length: hb.sets }, (_, i) => {
+                            const done = i + 1 < hbRun.set || isDone;
+                            const active = i + 1 === hbRun.set && !isDone;
+                            return <div key={i} style={{ width: 10, height: 10, borderRadius: 5, background: done ? "#06d6a0" : active ? "#e85d26" : "#2a2d33", boxShadow: active ? "0 0 8px #e85d26" : "none" }} />;
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Next grip preview during rest */}
+                      {hbRun.phase === "rest" && nextGrip && (
+                        <div style={{ textAlign: "center", padding: "12px", background: "#13151a", borderRadius: "10px", border: "1px solid #1f2225", marginTop: "12px" }}>
+                          <div style={{ fontSize: 10, color: "#666", marginBottom: 4 }}>NÄCHSTER GRIFF</div>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>{nextGrip}</div>
+                        </div>
+                      )}
+
+                      {/* Controls */}
+                      <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+                        {isDone ? (
+                          <>
+                            <button onClick={() => { hbStop(); }} style={{ flex: 1, height: 56, border: "none", borderRadius: 12, fontSize: 16, fontWeight: 800, cursor: "pointer", background: "#4361ee", color: "#fff", fontFamily: "inherit" }}>↻ Nochmal</button>
+                            <button onClick={hbStop} style={{ flex: 1, height: 56, border: "1px solid #2a2d33", borderRadius: 12, fontSize: 16, fontWeight: 800, cursor: "pointer", background: "#13151a", color: "#ccc", fontFamily: "inherit" }}>✓ Fertig</button>
+                          </>
+                        ) : (
+                          <>
+                            {hbRun.paused ? (
+                              <button onClick={hbStart} style={{ flex: 1, height: 56, border: "none", borderRadius: 12, fontSize: 16, fontWeight: 800, cursor: "pointer", background: "#e85d26", color: "#fff", fontFamily: "inherit" }}>▶  Weiter</button>
+                            ) : (
+                              <button onClick={hbPause} style={{ flex: 1, height: 56, border: "none", borderRadius: 12, fontSize: 16, fontWeight: 800, cursor: "pointer", background: "#ffd166", color: "#000", fontFamily: "inherit" }}>⏸ Pause</button>
+                            )}
+                            <button onClick={hbStop} style={{ flex: 1, height: 56, border: "1px solid #2a2d33", borderRadius: 12, fontSize: 16, fontWeight: 800, cursor: "pointer", background: "#1a1c20", color: "#888", fontFamily: "inherit" }}>⏹ Stopp</button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* GLOSSARY VIEW */}
         {view === "glossary" && (
           <div>
             <div style={{ marginBottom: "24px" }}>
-              <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "18px", fontWeight: 600, color: "#e85d26", margin: "0 0 8px" }}>
-                Legende & Glossar
-              </h2>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "18px", fontWeight: 600, color: "#e85d26", margin: "0 0 8px" }}>
+                  Legende & Glossar
+                </h2>
+                {glossaryHighlight && (
+                  <button
+                    onClick={() => { setGlossaryHighlight(null); setView("training"); }}
+                    style={{
+                      padding: "5px 12px", background: "#13151a", border: "1px solid #2a2d33",
+                      borderRadius: "6px", color: "#888", fontSize: "10px", fontWeight: 600,
+                      cursor: "pointer", fontFamily: "inherit",
+                    }}
+                  >← ZURÜCK ZUM PLAN</button>
+                )}
+              </div>
               <p style={{ fontSize: "12px", color: "#888", margin: 0, lineHeight: 1.6 }}>
                 Alle Fachbegriffe, Übungen und Abkürzungen aus dem Trainingsplan erklärt.
               </p>
@@ -2259,34 +2575,52 @@ function App() {
                 }}>
                   {section.category.toUpperCase()}
                 </div>
-                {section.entries.map((entry, idx) => (
-                  <div key={idx} style={{
-                    padding: "10px 14px",
-                    background: "#13151a",
-                    borderRadius: "6px",
-                    marginBottom: "4px",
-                    border: "1px solid #1f2225",
-                  }}>
-                    <div style={{ display: "flex", alignItems: "baseline", gap: "8px", marginBottom: "4px" }}>
-                      <span style={{
-                        fontFamily: "'Space Grotesk', sans-serif",
-                        fontSize: "13px",
-                        fontWeight: 600,
-                        color: section.color,
-                      }}>
-                        {entry.term}
-                      </span>
-                      {entry.full && (
-                        <span style={{ fontSize: "10px", color: "#666", fontStyle: "italic" }}>
-                          ({entry.full})
+                {section.entries.map((entry, idx) => {
+                  const isHighlighted = glossaryHighlight === entry.term;
+                  return (
+                    <div
+                      key={idx}
+                      id={`glossary-${entry.term.replace(/[\s\/()]/g, "-")}`}
+                      style={{
+                        padding: "10px 14px",
+                        background: isHighlighted ? `${section.color}15` : "#13151a",
+                        borderRadius: "6px",
+                        marginBottom: "4px",
+                        border: isHighlighted ? `1px solid ${section.color}50` : "1px solid #1f2225",
+                        transition: "all 0.3s",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "baseline", gap: "8px", marginBottom: "4px" }}>
+                        <span style={{
+                          fontFamily: "'Space Grotesk', sans-serif",
+                          fontSize: "13px",
+                          fontWeight: 600,
+                          color: section.color,
+                        }}>
+                          {entry.term}
                         </span>
+                        {entry.full && (
+                          <span style={{ fontSize: "10px", color: "#666", fontStyle: "italic" }}>
+                            ({entry.full})
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: "11px", color: "#aaa", lineHeight: 1.6 }}>
+                        {entry.desc}
+                      </div>
+                      {entry.exec && (
+                        <div style={{
+                          fontSize: "10px", color: "#8a8", lineHeight: 1.6,
+                          marginTop: "6px", paddingTop: "6px",
+                          borderTop: "1px solid #1f2225",
+                        }}>
+                          <span style={{ fontWeight: 700, color: "#6bbd7a", fontSize: "9px", letterSpacing: "0.5px" }}>AUSFÜHRUNG: </span>
+                          {entry.exec}
+                        </div>
                       )}
                     </div>
-                    <div style={{ fontSize: "11px", color: "#aaa", lineHeight: 1.6 }}>
-                      {entry.desc}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ))}
           </div>
@@ -2302,3 +2636,4 @@ function App() {
   </script>
 </body>
 </html>
+
