@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -801,8 +800,13 @@ function App() {
     return g.slice(0, sets);
   };
 
+  let _hbAudioCtx = null;
   const hbBeep = (freq, dur) => {
-    try { const ac = new (window.AudioContext||window.webkitAudioContext)(); const o=ac.createOscillator(); const g=ac.createGain(); o.connect(g); g.connect(ac.destination); o.frequency.value=freq; o.type="sine"; g.gain.value=0.3; o.start(); o.stop(ac.currentTime+dur/1000); g.gain.exponentialRampToValueAtTime&&g.gain.exponentialRampToValueAtTime(0.01,ac.currentTime+dur/1000); } catch(e){}
+    try {
+      if(!_hbAudioCtx) _hbAudioCtx = new (window.AudioContext||window.webkitAudioContext)();
+      if(_hbAudioCtx.state === "suspended") _hbAudioCtx.resume();
+      const o=_hbAudioCtx.createOscillator(); const g=_hbAudioCtx.createGain(); o.connect(g); g.connect(_hbAudioCtx.destination); o.frequency.value=freq; o.type="sine"; g.gain.value=0.35; o.start(); o.stop(_hbAudioCtx.currentTime+dur/1000);
+    } catch(e){}
   };
 
   const hbStart = () => {
@@ -2636,4 +2640,3 @@ function App() {
   </script>
 </body>
 </html>
-
