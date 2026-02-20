@@ -1,0 +1,2304 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="InnerCrux" />
+  <meta name="theme-color" content="#0d0f11" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>InnerCrux → SEND | 12-Wochen Klettertraining</title>
+
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◈</text></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d0f11; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
+    input, select, button { outline: none; -webkit-appearance: none; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0d0f11; }
+    ::-webkit-scrollbar-thumb { background: #2a2d33; border-radius: 3px; }
+    @keyframes pulse { from { width: 20%; } to { width: 90%; } }
+  </style>
+
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useCallback, useRef } = React;
+
+    // === Custom SVG Charts (no external dependencies) ===
+
+    function SvgRadarChart({ data, color = "#e85d26", size = 240 }) {
+      const cx = size / 2, cy = size / 2, r = size * 0.35;
+      const n = data.length;
+      const angleStep = (2 * Math.PI) / n;
+
+      const getPoint = (index, value) => {
+        const angle = angleStep * index - Math.PI / 2;
+        const dist = (value / 100) * r;
+        return { x: cx + dist * Math.cos(angle), y: cy + dist * Math.sin(angle) };
+      };
+
+      const gridLevels = [25, 50, 75, 100];
+      const dataPoints = data.map((d, i) => getPoint(i, d.value));
+      const pathD = dataPoints.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ") + " Z";
+
+      return (
+        <svg width="100%" viewBox={`0 0 ${size} ${size}`} style={{ maxWidth: size }}>
+          {gridLevels.map(level => {
+            const pts = Array.from({ length: n }, (_, i) => getPoint(i, level));
+            const d = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ") + " Z";
+            return <path key={level} d={d} fill="none" stroke="#2a2d33" strokeWidth="1" />;
+          })}
+          {data.map((_, i) => {
+            const p = getPoint(i, 100);
+            return <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke="#1f2225" strokeWidth="1" />;
+          })}
+          <path d={pathD} fill={color} fillOpacity="0.15" stroke={color} strokeWidth="2" />
+          {dataPoints.map((p, i) => (
+            <circle key={i} cx={p.x} cy={p.y} r="3" fill={color} />
+          ))}
+          {data.map((d, i) => {
+            const p = getPoint(i, 115);
+            return (
+              <text key={i} x={p.x} y={p.y} textAnchor="middle" dominantBaseline="middle"
+                fill="#888" fontSize="9" fontFamily="'JetBrains Mono', monospace">
+                {d.metric}
+              </text>
+            );
+          })}
+        </svg>
+      );
+    }
+
+    function SvgLineChart({ data, dataKey, color = "#e85d26", height = 150 }) {
+      const containerRef = useRef(null);
+      const [width, setWidth] = useState(400);
+
+      useEffect(() => {
+        if (containerRef.current) {
+          const obs = new ResizeObserver(entries => {
+            for (const e of entries) setWidth(e.contentRect.width);
+          });
+          obs.observe(containerRef.current);
+          setWidth(containerRef.current.offsetWidth);
+          return () => obs.disconnect();
+        }
+      }, []);
+
+      const points = data.map((d, i) => ({ x: i, y: d[dataKey], label: d.week })).filter(p => p.y != null);
+      if (points.length === 0) return null;
+
+      const pad = { top: 20, right: 20, bottom: 28, left: 45 };
+      const w = width - pad.left - pad.right;
+      const h = height - pad.top - pad.bottom;
+
+      const vals = points.map(p => p.y);
+      const yMin = Math.floor(Math.min(...vals) - 2);
+      const yMax = Math.ceil(Math.max(...vals) + 2);
+      const yRange = yMax - yMin || 1;
+
+      const xScale = (i) => pad.left + (i / 11) * w;
+      const yScale = (v) => pad.top + h - ((v - yMin) / yRange) * h;
+
+      const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"}${xScale(p.x)},${yScale(p.y)}`).join(" ");
+
+      const yTicks = 4;
+      const yStep = yRange / yTicks;
+
+      const [tooltip, setTooltip] = useState(null);
+
+      return (
+        <div ref={containerRef} style={{ width: "100%" }}>
+          <svg width={width} height={height} style={{ display: "block" }}>
+            {Array.from({ length: yTicks + 1 }, (_, i) => {
+              const val = yMin + i * yStep;
+              const y = yScale(val);
+              return (
+                <g key={i}>
+                  <line x1={pad.left} y1={y} x2={width - pad.right} y2={y} stroke="#1f2225" strokeWidth="1" strokeDasharray="3,3" />
+                  <text x={pad.left - 6} y={y + 3} textAnchor="end" fill="#666" fontSize="9" fontFamily="'JetBrains Mono', monospace">
+                    {Math.round(val * 10) / 10}
+                  </text>
+                </g>
+              );
+            })}
+            {data.map((d, i) => (
+              <text key={i} x={xScale(i)} y={height - 6} textAnchor="middle" fill="#666" fontSize="9" fontFamily="'JetBrains Mono', monospace">
+                {d.week}
+              </text>
+            ))}
+            <path d={pathD} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            {points.map((p, i) => (
+              <circle key={i} cx={xScale(p.x)} cy={yScale(p.y)} r="3.5" fill={color} stroke="#13151a" strokeWidth="1.5"
+                style={{ cursor: "pointer" }}
+                onMouseEnter={() => setTooltip({ x: xScale(p.x), y: yScale(p.y), val: p.y, label: p.label })}
+                onMouseLeave={() => setTooltip(null)}
+              />
+            ))}
+            {tooltip && (
+              <g>
+                <rect x={tooltip.x - 30} y={tooltip.y - 28} width="60" height="20" rx="4" fill="#1a1c20" stroke="#2a2d33" />
+                <text x={tooltip.x} y={tooltip.y - 15} textAnchor="middle" fill="#e8e6e1" fontSize="10" fontFamily="'JetBrains Mono', monospace">
+                  {tooltip.label}: {tooltip.val}
+                </text>
+              </g>
+            )}
+          </svg>
+        </div>
+      );
+    }
+const PHASES = [
+  { id: "hypertrophy1", name: "Hypertrophie I", weeks: [1, 2, 3, 4], color: "#e85d26", desc: "Muskelaufbau · Kalorienüberschuss", icon: "◆" },
+  { id: "hypertrophy2", name: "Hypertrophie II", weeks: [5, 6, 7], color: "#d94f1a", desc: "Intensivierung · Kalorienüberschuss", icon: "◆◆" },
+  { id: "maxstrength", name: "Maximalkraft", weeks: [8, 9, 10], color: "#1a8fba", desc: "Kraftkonversion · Defizit beginnt", icon: "▲" },
+  { id: "performance", name: "Performance", weeks: [11, 12], color: "#2cb567", desc: "Anwendung · Gewicht reduzieren", icon: "★" },
+];
+
+const ASSESSMENT_TESTS = [
+  { id: "maxPullups", label: "Max Pull-ups (strikt)", unit: "Wdh", category: "Kraft", tip: "Schulterbreit, volle ROM, kein Kipping" },
+  { id: "maxHangTime", label: "Max Hang (20mm Leiste)", unit: "Sek", category: "Finger", tip: "Offene Aufstellung, beide Hände, bis Failure" },
+  { id: "weightedPullup", label: "Weighted Pull-up 1RM", unit: "kg Zusatz", category: "Kraft", tip: "Oder schätze: 5RM × 1.15" },
+  { id: "fingerStrength", label: "Max Hang Zusatzgewicht (20mm)", unit: "kg", category: "Finger", tip: "7-Sekunden-Hang, halbaufgestellt" },
+  { id: "lockoff7s", label: "Lock-off 90° halten", unit: "Sek", category: "Kraft", tip: "Einarmig oder beidarmig mit Zusatzgewicht" },
+  { id: "pushups", label: "Max Liegestütze", unit: "Wdh", category: "Antagonist", tip: "Saubere Form bis Failure" },
+  { id: "coreHold", label: "L-Sit Hold", unit: "Sek", category: "Core", tip: "An Ringen oder Barren" },
+  { id: "bodyweight", label: "Körpergewicht", unit: "kg", category: "Körper", tip: "Morgens, nüchtern" },
+  { id: "bodyFat", label: "Körperfettanteil (geschätzt)", unit: "%", category: "Körper", tip: "Kaliper, Spiegel oder DEXA" },
+  { id: "boulderGrade", label: "Aktuelles max. Boulderlevel", unit: "Fb", category: "Klettern", tip: "Konsistenter Flash/2. Go" },
+  { id: "routeGrade", label: "Aktuelles max. Routenlevel", unit: "UIAA/Franz.", category: "Klettern", tip: "Rotpunkt" },
+];
+
+const GRADE_OPTIONS = ["6a", "6a+", "6b", "6b+", "6c", "6c+", "7a", "7a+", "7b", "7b+", "7c", "7c+", "8a", "8a+", "8b", "8b+"];
+
+const GLOSSARY = [
+  {
+    category: "Trainings-Begriffe",
+    color: "#e85d26",
+    entries: [
+      { term: "ROM", full: "Range of Motion", desc: "Voller Bewegungsumfang einer Übung. Bei Pull-ups: von gestreckten Armen bis Kinn über Stange. Halbe ROM = halbe Gewinne." },
+      { term: "1RM", full: "One Rep Max", desc: "Das maximale Gewicht, das du genau einmal sauber bewegen kannst. Grundlage für Intensitäts-Prozente (z.B. 85% 1RM)." },
+      { term: "5RM", full: "Five Rep Max", desc: "Maximales Gewicht für 5 saubere Wiederholungen. Zur 1RM-Schätzung: 5RM × 1.15 ≈ 1RM." },
+      { term: "Hypertrophie", full: null, desc: "Muskelquerschnitts-Vergrößerung durch Training. Typischer Rep-Bereich: 6-12 Wiederholungen, moderate bis hohe Last. In Phase I+II des Plans." },
+      { term: "Maximalkraft", full: null, desc: "Höchstmögliche Kraft bei einer einzelnen willkürlichen Kontraktion. Training mit 1-5 Reps und langen Pausen (3-5min). Phase III." },
+      { term: "Kalorienüberschuss / -defizit", full: null, desc: "Überschuss (+400 kcal): mehr essen als verbraucht → Muskelaufbau. Defizit (-200 bis -400): weniger essen → Fett abbauen bei Krafterhalt." },
+      { term: "Progressive Overload", full: null, desc: "Kernprinzip: Training muss über Zeit schwerer werden (mehr Gewicht, Reps oder Sets), damit der Körper sich weiter anpasst." },
+      { term: "Deload", full: null, desc: "Geplante Reduktion von Volumen/Intensität (typisch 40-60%) zur Regeneration. Verhindert Übertraining." },
+      { term: "Superset", full: null, desc: "Zwei Übungen direkt hintereinander ohne Pause. Agonist/Antagonist-Supersätze (z.B. Pull-up + Dip) sind besonders effizient." },
+      { term: "Refeeds", full: null, desc: "Tage mit erhöhter Kalorienzufuhr (v.a. Kohlenhydrate) während einer Diätphase. Hilft Hormone und Leistung aufrechtzuerhalten." },
+      { term: "Zone 2 Cardio", full: null, desc: "Leichtes Ausdauertraining bei dem du dich noch unterhalten kannst (~60-70% max. Herzfrequenz). Ideal für aktive Regeneration." },
+      { term: "Prehab", full: "Prä-Habilitation", desc: "Vorbeugende Übungen gegen Verletzungen. Für Kletterer besonders wichtig: Schultern, Ellbogen, Handgelenke, Finger." },
+      { term: "Failure", full: null, desc: "Muskelversagen — der Punkt, an dem du keine weitere saubere Wiederholung mehr schaffst." },
+      { term: "Exzentrisch", full: null, desc: "Die abbremsende Phase einer Bewegung (z.B. das Herunterlassen beim Pull-up). Erzeugt mehr Muskelschaden → mehr Wachstum." },
+      { term: "Kontaktstart", full: null, desc: "Am Campusboard: Start mit beiden Händen auf demselben Griff (statt aus dem Hang). Reduziert die Anforderung." },
+      { term: "Pausen-Reps", full: null, desc: "Kurze Pause (2-3s) am schwierigsten Punkt der Bewegung, bevor du weitermachst. Erhöht die Zeit unter Spannung." },
+    ],
+  },
+  {
+    category: "Übungen — Oberkörper",
+    color: "#5db8e8",
+    entries: [
+      { term: "Weighted Pull-ups", full: null, desc: "Klimmzüge mit Zusatzgewicht (Gürtel oder Weste). DIE Schlüsselübung für Zugkraft beim Klettern. Schulterbreit, Handflächen weg." },
+      { term: "Pendelay Rows", full: null, desc: "Langhantelrudern von Glenn Pendlay. Stange liegt komplett am Boden, explosiv zur Brust rudern, kontrolliert ablegen. Baut massive Rückenbreite." },
+      { term: "Ring Dips", full: null, desc: "Dips an Turnringen statt festen Holmen. Die Instabilität der Ringe aktiviert mehr Stabilisatoren. Antagonist zu Zugbewegungen." },
+      { term: "Ring Push-ups", full: null, desc: "Liegestütze mit Händen auf Ringen. Deutlich anspruchsvoller als am Boden durch die Instabilität." },
+      { term: "One-Arm Pull-up Progressions", full: null, desc: "Stufenweises Heranarbeiten an einarmige Klimmzüge: Pulley-Unterstützung, exzentrische Einarmige, oder Gewichtsausgleich mit Seilzug." },
+      { term: "Ring Muscle-up", full: null, desc: "Aus dem Hang an Ringen über die Ringe drücken. Kombination aus Pull-up und Dip in einer explosiven Bewegung." },
+      { term: "Lat Pulldown", full: null, desc: "Latzug am Kabelturm. Gleiche Bewegung wie Pull-up, aber mit einstellbarem Gewicht. 'Wide Grip' = weiter als schulterbreit." },
+      { term: "Face Pulls", full: null, desc: "Am Kabelzug zur Stirn ziehen mit Seil. Stärkt hintere Schulter und Rotatorenmanschette. Essentiell für Schultergesundheit bei Kletterern." },
+      { term: "Schulterdrücken (DB)", full: "Dumbbell Shoulder Press", desc: "Kurzhanteln seitlich neben Kopf, nach oben drücken. Antagonist zum Klettern und wichtig für Schulterstabilität." },
+      { term: "Bizep Curls", full: null, desc: "Hammer-Curls (neutral grip) + supinierte Curls (Handflächen oben). EZ-Bar ist gelenkschonender als Langhantel." },
+      { term: "Wrist Roller", full: null, desc: "Gewicht an einer Schnur, die um eine Stange gewickelt ist. Auf- und abrollen trainiert die Unterarme intensiv." },
+      { term: "Reverse Wrist Curls", full: null, desc: "Handgelenk-Streckung mit leichter Hantel. Trainiert die Extensoren des Unterarms und beugt Kletterer-Ellbogen vor." },
+      { term: "YTWL", full: null, desc: "Vier Schulterstabilisations-Übungen: Arme in Y-, T-, W- und L-Position heben. Leicht, aber extrem effektiv für Prehab." },
+      { term: "Pronator/Supinator", full: null, desc: "Unterarmdrehung mit Hammer oder Keule. Stärkt die Drehmuskulatur und schützt den Ellbogen." },
+    ],
+  },
+  {
+    category: "Übungen — Finger & Board",
+    color: "#e8c95d",
+    entries: [
+      { term: "Repeaters", full: null, desc: "Intervall-Hangübung am Hangboard: z.B. 7s hängen / 3s Pause × 6 Reps = 1 Set. DAS Standard-Protokoll für Fingerkraft-Ausdauer und Hypertrophie." },
+      { term: "Max Hangs", full: null, desc: "Einmalige Hänger mit maximalem Zusatzgewicht (7-10s). Trainiert maximale Fingerkraft. Braucht lange Pausen (3-5min)." },
+      { term: "20mm Leiste", full: null, desc: "Standard-Testleiste am Hangboard (20mm tief). Quasi der 'Bench Press' der Kletterwelt. Die meisten Boards haben 20mm und kleinere Leisten." },
+      { term: "14mm Leiste", full: null, desc: "Schmalere Leiste am Hangboard. Deutlich anspruchsvoller als 20mm, trainiert spezifischere Fingerkraft." },
+      { term: "Offene Hand", full: "Open Hand Crimp", desc: "Griffhaltung mit gestreckten Fingergelenken. Schonender für die Gelenke und baut langfristig mehr Kraft auf als der geschlossene Aufsteller." },
+      { term: "Halbaufgestellt", full: "Half Crimp", desc: "Fingergelenke auf ~90° gebeugt, Daumen liegt NICHT auf. Guter Kompromiss zwischen Kraft und Gelenkschonung." },
+      { term: "Campus Board", full: null, desc: "Überhängendes Brett mit nummerierten Leisten. Training ohne Füße für explosive Fingerkraft und Kontaktkraft." },
+      { term: "Ladders (1-3-5-7)", full: null, desc: "Am Campusboard: abwechselnd Griffe hochgreifen (Leiste 1→3→5→7). Zahlen = Leistennummern von unten." },
+      { term: "Bumps & Touches", full: null, desc: "Campusboard-Übungen: Bumps = eine Hand eine Leiste höher nachsetzen. Touches = Leiste antippen und zurück." },
+      { term: "Systemboard", full: null, desc: "Kletterwand mit systematisch angeordneten Griffen verschiedener Typen. Erlaubt gezieltes Training spezifischer Griffkombinationen und Züge." },
+    ],
+  },
+  {
+    category: "Übungen — Core & Beine",
+    color: "#c59dff",
+    entries: [
+      { term: "L-Sit", full: null, desc: "An Barren/Ringen: Beine gestreckt waagerecht halten. Trainiert Hüftbeuger und gesamte Rumpfmuskulatur. Standard-Core-Übung fürs Klettern." },
+      { term: "Front Lever", full: null, desc: "Aus dem Hang waagerecht halten (Rücken nach unten). Progressionen: Tuck → Advanced Tuck → Straddle → Full. Extremer Core + Latissimus." },
+      { term: "Dragon Flags", full: null, desc: "Auf Bank liegend, Körper gestreckt von Schultern abheben. Bruce-Lee-Übung für brutale Core-Kraft." },
+      { term: "Hanging Leg Raises", full: null, desc: "Im Hang an der Stange: gestreckte Beine bis zur Stange heben. 'Toe-to-Bar' wenn Zehen die Stange berühren." },
+      { term: "Pallof Press", full: null, desc: "Anti-Rotationsübung am Kabelzug: Kabel seitlich, Griff vor die Brust drücken und halten. Trainiert seitliche Core-Stabilität." },
+      { term: "Ab Wheel Rollouts", full: null, desc: "Mit dem Bauchrad nach vorne ausrollen und zurück. Hervorragend für 'Body Tension' beim Klettern (Überhang!)." },
+      { term: "Planche Progressions", full: null, desc: "Stufenweise zum Planche (freistehender Liegestütz waagerecht). Trainiert extreme Push-Kraft und Core." },
+      { term: "Pistol Squats", full: null, desc: "Einbeinige Kniebeuge. Relevant für hohe Tritte und dynamische Züge beim Klettern. Wenn zu schwer: Bulgarian Split Squats als Alternative." },
+      { term: "Bulgarian Split Squats", full: null, desc: "Einbeinige Kniebeuge mit hinterem Fuß auf Bank erhöht. Leichter als Pistol Squats, gleicher Muskelaufbau." },
+      { term: "Romanian Deadlift (RDL)", full: null, desc: "Kreuzheben mit fast gestreckten Beinen. Trainiert die gesamte Körperrückseite (Posterior Chain): Hamstrings, Gesäß, unterer Rücken." },
+      { term: "Nordic Hamstring Curls", full: null, desc: "Knieend, Füße fixiert, Oberkörper langsam nach vorne fallen lassen und bremsen. Extrem effektiv für Hamstring-Kraft." },
+      { term: "Front Squats", full: null, desc: "Kniebeuge mit Langhantel vorne auf den Schultern. Aktiviert den Core stärker als Back Squats." },
+    ],
+  },
+  {
+    category: "Klettertraining",
+    color: "#2cb567",
+    entries: [
+      { term: "Limit Bouldering", full: null, desc: "Bouldern an Problemen nahe oder über deinem aktuellen Maximum. Wenige Züge, maximale Intensität, volle Pausen (3-5min). DAS Krafttraining an der Wand." },
+      { term: "Volumen-Session", full: null, desc: "Viele Boulder deutlich unter dem Maximum klettern. Fokus auf Technik, Bewegungseffizienz und Grundlagen-Ausdauer." },
+      { term: "4×4s", full: null, desc: "4 Boulder hintereinander klettern (jeweils ~70% deines Max), 4min Pause, 4 Runden. Trainiert Kraft-Ausdauer und Klettern trotz Pump." },
+      { term: "Projekt-Session", full: null, desc: "Fokussiertes Arbeiten an 2-4 Bouldern die du noch nicht geschafft hast. Züge lernen, verknüpfen und senden." },
+      { term: "Flash-Level", full: null, desc: "Der Grad, den du beim ersten Versuch (Flash) oder zweiten Go schaffst. Dein 'Arbeitslevel'." },
+      { term: "Send / Senden", full: null, desc: "Einen Boulder oder eine Route komplett durchsteigen. 'Send-Session' = Session mit dem Ziel, Projekte abzuschließen." },
+      { term: "Pyramide (Aufwärmen)", full: null, desc: "Stufenweise hocharbeiten: z.B. 2× leicht, 2× mittel, 1× Flash-Level. Systematisches Aufwärmen das Verletzungen vorbeugt." },
+      { term: "Pump", full: null, desc: "Anschwellen und Verhärten der Unterarme durch Laktat-Ansammlung. 'Klettern trotz Pump' ist eine trainierbare Fähigkeit." },
+    ],
+  },
+  {
+    category: "Ernährungs-Begriffe",
+    color: "#6bbd7a",
+    entries: [
+      { term: "Makros", full: "Makronährstoffe", desc: "Die drei Hauptnährstoffe: Protein (4 kcal/g), Kohlenhydrate (4 kcal/g) und Fett (9 kcal/g)." },
+      { term: "Mikros", full: "Mikronährstoffe", desc: "Vitamine und Mineralstoffe. Oft vernachlässigt beim Bulking/Cutting. Genug Gemüse, Obst und Nüsse essen!" },
+      { term: "Protein (2.0-2.5g/kg)", full: null, desc: "Baustein für Muskelaufbau. Kletterer brauchen 2.0-2.2g/kg im Aufbau, 2.2-2.5g/kg im Defizit um Muskelverlust zu minimieren." },
+      { term: "Kreatin", full: null, desc: "Bestens erforschtes Supplement. 5g/Tag erhöht Kraft und Regeneration. Gewichtszunahme von ~1-2kg durch Wassereinlagerung ist normal und kein Fett." },
+      { term: "Post-Workout", full: null, desc: "Mahlzeit nach dem Training. Idealerweise 30-40g Protein + Kohlenhydrate innerhalb 1-2h nach dem Training." },
+      { term: "Bulking / Aufbauphase", full: null, desc: "Phase mit Kalorienüberschuss zum Muskelaufbau. Ziel: 0.25-0.5kg/Woche zunehmen. Mehr = zu viel Fett." },
+      { term: "Cutting / Diätphase", full: null, desc: "Phase mit Kaloriendefizit zum Fettabbau. Ziel: max 0.5kg/Woche abnehmen. Langsamer = mehr Muskelhalt." },
+    ],
+  },
+];
+
+const MEAL_PLANS = {
+  hypertrophy: {
+    label: "Aufbauphase",
+    principle: "Kalorienüberschuss +300–500 kcal. Fokus auf proteinreiche vegetarische Quellen, ergänzt durch leichte Fleischkost 2-3×/Woche. Jede Mahlzeit sollte Protein enthalten.",
+    tips: [
+      "Post-Workout: Innerhalb 1h nach Training 30-40g Protein + schnelle Carbs",
+      "Kreatin: 5g täglich (z.B. ins Müsli oder Shake)",
+      "Protein gleichmäßig über den Tag verteilen (4-5 Mahlzeiten)",
+      "An Trainingstagen mehr Kohlenhydrate, an Ruhetagen etwas mehr Fett",
+      "Mindestens 500g Gemüse/Tag für Mikronährstoffe",
+    ],
+    days: [
+      {
+        day: "Mo", label: "Trainingstag (Gym)", type: "training",
+        meals: [
+          { time: "07:00", name: "Frühstück", items: "Haferflocken (80g) mit Sojamilch, Banane, Walnüsse (20g), Chiasamen (15g), Honig", protein: 22, cal: 580, tags: ["vegan"] },
+          { time: "10:00", name: "Snack", items: "Griechischer Joghurt (200g) mit Heidelbeeren und Kürbiskernen (15g)", protein: 20, cal: 260, tags: ["vegetarisch"] },
+          { time: "12:30", name: "Mittagessen", items: "Linsen-Dal (200g rote Linsen) mit Basmatireis (150g gekocht), Spinat, Tomate, Kokosmilch", protein: 28, cal: 650, tags: ["vegan"] },
+          { time: "15:30", name: "Pre-Workout", items: "Vollkornbrot (2 Scheiben) mit Erdnussbutter (30g) und Banane", protein: 14, cal: 420, tags: ["vegan"] },
+          { time: "18:30", name: "Post-Workout", items: "Proteinshake (30g Whey/Erbsenprotein) mit Hafermilch und Dattel", protein: 32, cal: 320, tags: ["vegetarisch"] },
+          { time: "19:30", name: "Abendessen", items: "Süßkartoffel-Kichererbsen-Bowl mit Tahini-Dressing, Avocado, Rucola, Feta (30g)", protein: 24, cal: 620, tags: ["vegetarisch"] },
+        ]
+      },
+      {
+        day: "Di", label: "Trainingstag (Board)", type: "training",
+        meals: [
+          { time: "07:00", name: "Frühstück", items: "Rührei (3 Eier) mit Vollkorntoast (2), Avocado (½), Tomaten, Kräuter", protein: 26, cal: 550, tags: ["vegetarisch"] },
+          { time: "10:00", name: "Snack", items: "Hüttenkäse (200g) mit Walnüssen und Apfel", protein: 24, cal: 300, tags: ["vegetarisch"] },
+          { time: "12:30", name: "Mittagessen", items: "Große Gemüsepfanne mit Tofu (200g), Brokkoli, Paprika, Cashews (20g), Sojasauce, Jasminreis (150g)", protein: 30, cal: 620, tags: ["vegan"] },
+          { time: "15:30", name: "Pre-Workout", items: "Banane + Handvoll Mandeln (25g) + Datteln (3)", protein: 8, cal: 340, tags: ["vegan"] },
+          { time: "18:30", name: "Post-Workout", items: "Proteinshake (30g) mit Haferflocken (40g) und Beeren", protein: 34, cal: 380, tags: ["vegetarisch"] },
+          { time: "19:30", name: "Abendessen", items: "Vollkorn-Pasta (100g) mit Pesto Rosso, weißen Bohnen (150g), Kirschtomaten, Parmesan (20g)", protein: 28, cal: 640, tags: ["vegetarisch"] },
+        ]
+      },
+      {
+        day: "Mi", label: "Ruhetag", type: "rest",
+        meals: [
+          { time: "08:00", name: "Frühstück", items: "Overnight Oats: Haferflocken (70g), Chiasamen (15g), Joghurt (150g), Mango, Kokosflocken", protein: 20, cal: 520, tags: ["vegetarisch"] },
+          { time: "11:00", name: "Snack", items: "Edamame (150g) mit Meersalz", protein: 18, cal: 220, tags: ["vegan"] },
+          { time: "13:00", name: "Mittagessen", items: "Großer Salat mit Quinoa (100g), schwarzen Bohnen, Mais, Avocado, Limetten-Dressing + 2 Scheiben Vollkornbrot", protein: 24, cal: 600, tags: ["vegan"] },
+          { time: "16:00", name: "Snack", items: "Proteinriegel oder selbstgemachte Energyballs (Datteln, Nüsse, Kakao, Proteinpulver)", protein: 20, cal: 280, tags: ["vegetarisch"] },
+          { time: "19:00", name: "Abendessen", items: "Gemüse-Curry (Aubergine, Kichererbsen, Spinat) mit Naan-Brot und Raita (Joghurt-Gurke)", protein: 22, cal: 580, tags: ["vegetarisch"] },
+          { time: "21:00", name: "Abendsnack", items: "Casein-Shake oder Quark (200g) mit etwas Honig und Zimt", protein: 28, cal: 220, tags: ["vegetarisch"] },
+        ]
+      },
+      {
+        day: "Do", label: "Trainingstag (Gym)", type: "training",
+        meals: [
+          { time: "07:00", name: "Frühstück", items: "Protein-Pancakes: Haferflocken (60g), Ei (2), Quark (100g), Banane — mit Ahornsirup und Beeren", protein: 30, cal: 560, tags: ["vegetarisch"] },
+          { time: "10:00", name: "Snack", items: "Hummus (80g) mit Möhren, Paprika und Vollkorn-Crackern", protein: 10, cal: 280, tags: ["vegan"] },
+          { time: "12:30", name: "Mittagessen", items: "Hähnchenbrust (150g) gegrillt mit Süßkartoffel (200g), grünem Spargel und Olivenöl", protein: 42, cal: 600, tags: ["fleisch"] },
+          { time: "15:30", name: "Pre-Workout", items: "Reiswaffeln (3) mit Erdnussbutter + Banane", protein: 10, cal: 350, tags: ["vegan"] },
+          { time: "18:30", name: "Post-Workout", items: "Shake: 30g Protein, Hafermilch, Banane, Spinat, Erdnussbutter (15g)", protein: 36, cal: 420, tags: ["vegetarisch"] },
+          { time: "19:30", name: "Abendessen", items: "Schwarze-Bohnen-Burritos mit Vollkorttortilla, Reis, Guacamole, Salsa, Käse, Salat", protein: 26, cal: 650, tags: ["vegetarisch"] },
+        ]
+      },
+      {
+        day: "Fr", label: "Trainingstag (Klettern)", type: "training",
+        meals: [
+          { time: "07:00", name: "Frühstück", items: "Müsli (70g) mit Sojamilch, Leinsamen, Banane, Mandeln (20g), Honig", protein: 18, cal: 520, tags: ["vegan"] },
+          { time: "10:00", name: "Snack", items: "Skyr (200g) mit Granola und Himbeeren", protein: 22, cal: 280, tags: ["vegetarisch"] },
+          { time: "12:30", name: "Mittagessen", items: "Große Falafel-Bowl mit Hummus, Tabouleh, Rotkraut, Tahini, Fladenbrot", protein: 22, cal: 640, tags: ["vegan"] },
+          { time: "15:00", name: "Pre-Workout (leicht)", items: "Banane + Reiswaffeln + Honig", protein: 4, cal: 250, tags: ["vegan"] },
+          { time: "18:30", name: "Post-Workout", items: "Proteinshake + Datteln (3)", protein: 32, cal: 340, tags: ["vegetarisch"] },
+          { time: "19:30", name: "Abendessen", items: "Lachs (150g) oder Räuchertofu mit Ofengemüse (Zucchini, Paprika, Zwiebel), Couscous, Zitronendressing", protein: 36, cal: 600, tags: ["fleisch", "fisch"] },
+        ]
+      },
+      {
+        day: "Sa", label: "Trainingstag (Gym leicht)", type: "training",
+        meals: [
+          { time: "08:00", name: "Frühstück", items: "Shakshuka: 3 Eier in Tomatensauce mit Paprika, Zwiebel, Feta (20g), Vollkornbrot (2)", protein: 28, cal: 520, tags: ["vegetarisch"] },
+          { time: "11:00", name: "Snack", items: "Trail Mix: Nüsse, Trockenfrüchte, dunkle Schokolade (30g)", protein: 8, cal: 300, tags: ["vegan"] },
+          { time: "13:30", name: "Mittagessen", items: "Paneer Tikka (200g) oder Halloumi mit Naan, Basmati, Mango-Chutney, Gurken-Raita", protein: 32, cal: 680, tags: ["vegetarisch"] },
+          { time: "16:00", name: "Snack", items: "Griechischer Joghurt (200g) mit Walnüssen und Honig", protein: 20, cal: 280, tags: ["vegetarisch"] },
+          { time: "19:00", name: "Abendessen", items: "Große Minestrone mit weißen Bohnen (200g), Vollkornbrot mit Olivenöl, gemischter Salat", protein: 22, cal: 560, tags: ["vegan"] },
+          { time: "21:00", name: "Abendsnack", items: "Quark (200g) mit Leinöl und Kräutern oder Casein-Shake", protein: 28, cal: 240, tags: ["vegetarisch"] },
+        ]
+      },
+      {
+        day: "So", label: "Ruhetag", type: "rest",
+        meals: [
+          { time: "09:00", name: "Brunch", items: "Großes Frühstück: Rührei (3), Avocado-Toast (2), Tomaten, Champignons, Hummus", protein: 30, cal: 650, tags: ["vegetarisch"] },
+          { time: "12:00", name: "Snack", items: "Smoothie: Spinat, Banane, Erdnussbutter, Proteinpulver, Hafermilch", protein: 30, cal: 380, tags: ["vegetarisch"] },
+          { time: "15:00", name: "Mittagessen", items: "Ofenkartoffel mit Bohnen-Chili (vegetarisch), saure Sahne, Schnittlauch, Käse", protein: 26, cal: 620, tags: ["vegetarisch"] },
+          { time: "18:00", name: "Snack", items: "Reiswaffeln mit Hüttenkäse und Gurke", protein: 14, cal: 200, tags: ["vegetarisch"] },
+          { time: "20:00", name: "Abendessen", items: "Pilz-Risotto mit Parmesan (30g), Rucola-Salat mit Pinienkernen und Balsamico", protein: 20, cal: 580, tags: ["vegetarisch"] },
+          { time: "21:30", name: "Abendsnack", items: "Quark (150g) mit Beeren und Nüssen", protein: 22, cal: 230, tags: ["vegetarisch"] },
+        ]
+      },
+    ],
+  },
+  cutting: {
+    label: "Defizit-Phase",
+    principle: "Kaloriendefizit -200 bis -500 kcal. Protein HOCH (2.2-2.5g/kg) um Muskelmasse zu schützen. Volumenreiches Essen (viel Gemüse) gegen Hunger. Max 0.5kg/Woche verlieren.",
+    tips: [
+      "Protein auf 2.5g/kg erhöhen — schützt die hart aufgebaute Muskulatur",
+      "Volumenreiches Essen: Gemüse, Salat, Suppen machen satt bei wenig Kalorien",
+      "Refeed alle 7-10 Tage: 1 Tag auf Maintenance-Kalorien mit extra Carbs",
+      "Fett nicht unter 0.8g/kg senken (Hormonhaushalt!)",
+      "Koffein vor dem Training hilft Leistung im Defizit aufrechtzuerhalten",
+      "Schlaf wird noch wichtiger — 8-9h anpeilen",
+    ],
+    days: [
+      {
+        day: "Mo", label: "Trainingstag (Max Kraft)", type: "training",
+        meals: [
+          { time: "07:00", name: "Frühstück", items: "Eiweiß-Omelett (4 Eiweiß + 1 Ei) mit Spinat, Tomaten, Feta (15g), 1 Scheibe Vollkornbrot", protein: 30, cal: 340, tags: ["vegetarisch"] },
+          { time: "10:00", name: "Snack", items: "Skyr (200g) mit wenig Granola (20g) und Beeren", protein: 22, cal: 200, tags: ["vegetarisch"] },
+          { time: "12:30", name: "Mittagessen", items: "Großer Salat mit Hähnchenbrust (120g), Kichererbsen (100g), Gurke, Paprika, Zitronendressing", protein: 38, cal: 420, tags: ["fleisch"] },
+          { time: "15:30", name: "Pre-Workout", items: "Reiswaffeln (2) mit Quark (50g) + schwarzer Kaffee", protein: 8, cal: 160, tags: ["vegetarisch"] },
+          { time: "18:30", name: "Post-Workout", items: "Proteinshake (30g) mit Wasser und Banane", protein: 32, cal: 250, tags: ["vegetarisch"] },
+          { time: "19:30", name: "Abendessen", items: "Blumenkohlreis-Stir-Fry mit Tofu (200g), Brokkoli, Edamame, Sojasauce, Ingwer", protein: 32, cal: 380, tags: ["vegan"] },
+        ]
+      },
+      {
+        day: "Di", label: "Trainingstag (Klettern)", type: "training",
+        meals: [
+          { time: "07:00", name: "Frühstück", items: "Protein-Porridge: Haferflocken (50g), Proteinpulver (25g), Beeren, Zimt, wenig Milch", protein: 32, cal: 360, tags: ["vegetarisch"] },
+          { time: "10:00", name: "Snack", items: "Hüttenkäse (150g) mit Gurke und Kräutern", protein: 18, cal: 140, tags: ["vegetarisch"] },
+          { time: "12:30", name: "Mittagessen", items: "Linsensuppe (250g rote Linsen) mit Kurkuma, Ingwer, Zitrone + kleiner Beilagensalat", protein: 26, cal: 400, tags: ["vegan"] },
+          { time: "15:30", name: "Pre-Workout", items: "Apfel + 10 Mandeln", protein: 4, cal: 180, tags: ["vegan"] },
+          { time: "18:30", name: "Post-Workout", items: "Proteinshake (30g) mit Wasser", protein: 30, cal: 130, tags: ["vegetarisch"] },
+          { time: "19:30", name: "Abendessen", items: "Zucchini-Nudeln mit Linsen-Bolognese, Parmesan (15g), großer grüner Salat", protein: 28, cal: 420, tags: ["vegetarisch"] },
+        ]
+      },
+      {
+        day: "Mi", label: "Ruhetag", type: "rest",
+        meals: [
+          { time: "08:00", name: "Frühstück", items: "Quark (250g) mit Leinsamen, wenig Honig, Apfel und Zimt", protein: 30, cal: 320, tags: ["vegetarisch"] },
+          { time: "11:00", name: "Snack", items: "Gemüsesticks (Möhre, Paprika, Gurke) mit Hummus (60g)", protein: 8, cal: 180, tags: ["vegan"] },
+          { time: "13:00", name: "Mittagessen", items: "Buddha-Bowl: Tempeh (150g), Edamame, Rotkohl, Avocado (½), Sesam-Dressing, wenig Reis (80g)", protein: 30, cal: 480, tags: ["vegan"] },
+          { time: "16:00", name: "Snack", items: "Ei (2) hartgekocht + Tomate + Salz", protein: 14, cal: 160, tags: ["vegetarisch"] },
+          { time: "19:00", name: "Abendessen", items: "Große Gemüsesuppe mit weißen Bohnen (150g), Karotte, Sellerie, Lauch, Kräuter + 1 Scheibe Brot", protein: 18, cal: 350, tags: ["vegan"] },
+        ]
+      },
+      {
+        day: "Do", label: "Trainingstag (Finger/Core)", type: "training",
+        meals: [
+          { time: "07:00", name: "Frühstück", items: "Vollkornbrot (2) mit Avocado (½), Räuchertofu (50g), Sprossen, Tomate", protein: 18, cal: 380, tags: ["vegan"] },
+          { time: "10:00", name: "Snack", items: "Skyr (200g) mit Zimt und wenig Walnüssen (10g)", protein: 22, cal: 190, tags: ["vegetarisch"] },
+          { time: "12:30", name: "Mittagessen", items: "Großer Kichererbsen-Salat mit Feta (30g), Oliven, Gurke, Tomate, Vollkornfladenbrot (½)", protein: 24, cal: 450, tags: ["vegetarisch"] },
+          { time: "15:30", name: "Pre-Workout", items: "Banane (½) + schwarzer Kaffee", protein: 1, cal: 60, tags: ["vegan"] },
+          { time: "18:30", name: "Post-Workout", items: "Proteinshake (30g) mit Hafermilch und TK-Beeren", protein: 32, cal: 230, tags: ["vegetarisch"] },
+          { time: "19:30", name: "Abendessen", items: "Auberginen-Gratin mit Linsen (150g), Tomatensauce, leicht Käse überbacken, Rucola", protein: 24, cal: 400, tags: ["vegetarisch"] },
+        ]
+      },
+      {
+        day: "Fr", label: "Trainingstag (Klettern)", type: "training",
+        meals: [
+          { time: "07:00", name: "Frühstück", items: "Smoothie-Bowl: Proteinpulver (25g), TK-Beeren, Banane (½), Spinat, Granola (20g)", protein: 28, cal: 340, tags: ["vegetarisch"] },
+          { time: "10:00", name: "Snack", items: "Edamame (100g) + kleiner Apfel", protein: 12, cal: 180, tags: ["vegan"] },
+          { time: "12:30", name: "Mittagessen", items: "Forelle (150g) oder Tempeh mit Ofengemüse (Zucchini, Paprika, Aubergine), Hummus, Salat", protein: 36, cal: 420, tags: ["fisch"] },
+          { time: "15:00", name: "Pre-Workout", items: "Reiswaffeln (2) mit Honig", protein: 2, cal: 140, tags: ["vegan"] },
+          { time: "18:30", name: "Post-Workout", items: "Proteinshake (30g) + Banane", protein: 32, cal: 250, tags: ["vegetarisch"] },
+          { time: "19:30", name: "Abendessen", items: "Thai-Gemüsecurry mit Tofu (200g), viel Gemüse, wenig Kokosmilch (50ml), KEIN Reis", protein: 26, cal: 350, tags: ["vegan"] },
+        ]
+      },
+      {
+        day: "Sa", label: "Leichter Training + Prehab", type: "training",
+        meals: [
+          { time: "08:00", name: "Frühstück", items: "Griechischer Joghurt (200g) mit Beeren, Chiasamen (10g), wenig Honig", protein: 22, cal: 280, tags: ["vegetarisch"] },
+          { time: "11:00", name: "Snack", items: "Protein-Riegel (oder Quark 150g mit Kakao)", protein: 20, cal: 200, tags: ["vegetarisch"] },
+          { time: "13:30", name: "Mittagessen", items: "Großer Wrap: Vollkorttortilla, schwarze Bohnen, Salat, Tomate, Avocado (¼), scharfe Sauce", protein: 20, cal: 400, tags: ["vegan"] },
+          { time: "16:00", name: "Snack", items: "Möhren + Sellerie mit Guacamole (50g)", protein: 4, cal: 150, tags: ["vegan"] },
+          { time: "19:00", name: "Abendessen", items: "Shakshuka (2 Eier) mit viel Gemüse, Spinat, nur 1 Scheibe Brot, Kräuter", protein: 22, cal: 360, tags: ["vegetarisch"] },
+        ]
+      },
+      {
+        day: "So", label: "Ruhetag / Refeed optional", type: "rest",
+        meals: [
+          { time: "09:00", name: "Frühstück", items: "Protein-Pancakes (klein): Haferflocken (40g), 2 Eier, Quark (80g) — mit Beeren, wenig Ahornsirup", protein: 26, cal: 380, tags: ["vegetarisch"] },
+          { time: "12:00", name: "Snack", items: "Hüttenkäse (200g) mit Kräutern und Paprika", protein: 24, cal: 200, tags: ["vegetarisch"] },
+          { time: "14:30", name: "Mittagessen", items: "Gemüse-Frittata (3 Eier) mit Zucchini, Champignons, Paprika, kleiner Salat", protein: 24, cal: 380, tags: ["vegetarisch"] },
+          { time: "17:00", name: "Snack", items: "Handvoll Mandeln (20g) + Apfel", protein: 6, cal: 200, tags: ["vegan"] },
+          { time: "19:30", name: "Abendessen", items: "Miso-Suppe mit Tofu (150g), Wakame, Edamame, Frühlingszwiebeln + Sesamreis (80g)", protein: 22, cal: 350, tags: ["vegan"] },
+        ]
+      },
+    ],
+  },
+};
+
+const SHOPPING_LIST = {
+  hypertrophy: {
+    "Proteinquellen": ["Eier (Bio, 2 Packungen/Woche)", "Griechischer Joghurt / Skyr", "Quark / Hüttenkäse", "Tofu (fest, 400g 2×/Woche)", "Linsen (rot + grün, 500g)", "Kichererbsen (Dose/Glas 3×)", "Schwarze Bohnen (2×)", "Weiße Bohnen (2×)", "Edamame (TK)", "Feta / Halloumi / Paneer", "Hähnchenbrust (1×/Woche, 300g)", "Lachs oder Forelle (1×/Woche, 150g)", "Proteinpulver (Whey oder Erbse)"],
+    "Kohlenhydrate": ["Haferflocken (Großpackung)", "Vollkornbrot / Tortillas", "Basmatireis / Jasminreis", "Vollkorn-Pasta", "Quinoa", "Couscous", "Süßkartoffeln (1kg)", "Reiswaffeln", "Naan / Fladenbrot"],
+    "Gemüse & Obst": ["Spinat (frisch + TK)", "Brokkoli", "Paprika (bunt)", "Tomaten + Kirschtomaten", "Avocados (3-4)", "Bananen (Bund)", "Beeren (frisch oder TK)", "Zucchini", "Aubergine", "Gurke", "Rucola", "Möhren", "Champignons", "Frühlingszwiebeln"],
+    "Fette & Nüsse": ["Erdnussbutter (natürlich)", "Tahini", "Walnüsse", "Mandeln", "Cashews", "Kürbiskerne", "Chiasamen", "Leinsamen", "Olivenöl (extra virgin)", "Kokosöl", "Leinöl"],
+    "Sonstiges": ["Hummus", "Sojasauce / Tamari", "Kokosmilch (Dose)", "Gewürze: Kurkuma, Kreuzkümmel, Zimt, Ingwer", "Kreatin Monohydrat", "Honig / Ahornsirup", "Dunkle Schokolade (>70%)", "Datteln"],
+  },
+};
+
+const generateWeeklyPlan = (week, assessment) => {
+  const phase = PHASES.find(p => p.weeks.includes(week));
+  if (!phase) return null;
+
+  const bw = parseFloat(assessment.bodyweight) || 70;
+  const surplus = phase.id.startsWith("hypertrophy") ? 400 : phase.id === "maxstrength" ? -200 : -400;
+  const baseCal = Math.round(bw * 32);
+  const totalCal = baseCal + surplus;
+  const proteinPerKg = phase.id.startsWith("hypertrophy") ? 2.2 : 2.5;
+  const protein = Math.round(bw * proteinPerKg);
+  const fatPercent = 0.28;
+  const fat = Math.round((totalCal * fatPercent) / 9);
+  const carbs = Math.round((totalCal - protein * 4 - fat * 9) / 4);
+
+  const plans = {
+    hypertrophy1: {
+      days: [
+        {
+          day: "Mo", title: "Oberkörper Push + Pull A", type: "gym",
+          exercises: [
+            { name: "Weighted Pull-ups", sets: 4, reps: "6-8", rest: "3min", note: "Fokus: kontrolliertes Ablassen" },
+            { name: "Schulterdrücken (DB)", sets: 3, reps: "8-10", rest: "2min", note: "Antagonist-Training" },
+            { name: "Pendelay Rows", sets: 4, reps: "6-8", rest: "2.5min", note: "Explosiv hoch, kontrolliert ab" },
+            { name: "Ring Dips", sets: 3, reps: "8-12", rest: "2min", note: "Volle ROM" },
+            { name: "Bizep Curls", sets: 3, reps: "10-12", rest: "90s", note: "Hammer + Supiniert" },
+            { name: "Reverse Wrist Curls", sets: 3, reps: "15", rest: "60s", note: "Verletzungsprophylaxe" },
+          ]
+        },
+        {
+          day: "Di", title: "Finger + Core", type: "board",
+          exercises: [
+            { name: "Repeaters (20mm)", sets: 6, reps: "7s on/3s off × 6", rest: "3min", note: "~70% max, offene Hand" },
+            { name: "Repeaters (14mm)", sets: 4, reps: "7s on/3s off × 4", rest: "3min", note: "Halbaufgestellt" },
+            { name: "Front Lever Progressions", sets: 4, reps: "5-8s Hold", rest: "2min", note: "Tuck → Advanced Tuck" },
+            { name: "Hanging Leg Raises", sets: 3, reps: "10-12", rest: "90s", note: "Gestreckt bis Zehen zur Stange" },
+            { name: "Pallof Press", sets: 3, reps: "10/Seite", rest: "60s", note: "Anti-Rotation" },
+          ]
+        },
+        {
+          day: "Mi", title: "Ruhetag / Leichtes Cardio", type: "rest",
+          exercises: [
+            { name: "Leichtes Joggen oder Radfahren", sets: 1, reps: "30-45min", rest: "-", note: "Zone 2, aktive Regeneration" },
+            { name: "Mobility Routine", sets: 1, reps: "15min", rest: "-", note: "Schultern, Hüfte, Handgelenke" },
+          ]
+        },
+        {
+          day: "Do", title: "Oberkörper Push + Pull B", type: "gym",
+          exercises: [
+            { name: "One-Arm Pull-up Progressions", sets: 5, reps: "3-5", rest: "3min", note: "Pulley oder Exzentrisch" },
+            { name: "Ring Push-ups", sets: 3, reps: "10-15", rest: "90s", note: "Antagonist" },
+            { name: "Wide Grip Lat Pulldown", sets: 4, reps: "8-10", rest: "2min", note: "Pausen-Reps am unteren Punkt" },
+            { name: "Face Pulls", sets: 3, reps: "15", rest: "60s", note: "Externe Rotation, Schultergesundheit" },
+            { name: "Wrist Roller", sets: 3, reps: "2 auf/ab", rest: "90s", note: "Unterarm Hypertrophie" },
+            { name: "Pronator/Supinator", sets: 2, reps: "12", rest: "60s", note: "Ellbogenprophylaxe" },
+          ]
+        },
+        {
+          day: "Fr", title: "Bouldern (Volumen)", type: "climb",
+          exercises: [
+            { name: "Aufwärmen: 20min leichte Boulder", sets: 1, reps: "~10 Boulder", rest: "-", note: "Unter Flash-Level" },
+            { name: "Volumen-Session", sets: 1, reps: "60-75min", rest: "-", note: "2-3 Grade unter Max, Technikfokus" },
+            { name: "4×4s", sets: 4, reps: "4 Boulder à ~70%", rest: "4min", note: "Pump-Training, klettern trotz Pump" },
+            { name: "Cooldown + Dehnen", sets: 1, reps: "10min", rest: "-", note: "Finger, Schultern, Unterarme" },
+          ]
+        },
+        {
+          day: "Sa", title: "Bein + Core + Mobility", type: "gym",
+          exercises: [
+            { name: "Pistol Squats (oder Bulgarian Split Squats)", sets: 3, reps: "8/Seite", rest: "2min", note: "Kletterrelevante Beinkraft" },
+            { name: "Romanian Deadlift", sets: 3, reps: "8-10", rest: "2min", note: "Posterior Chain" },
+            { name: "Ab Wheel Rollouts", sets: 3, reps: "8-12", rest: "90s", note: "Core Compression" },
+            { name: "Planche Progressions", sets: 3, reps: "15-20s", rest: "2min", note: "Push-Kraft" },
+            { name: "Yoga/Mobility Flow", sets: 1, reps: "20min", rest: "-", note: "Hip openers, Schulter-Mobility" },
+          ]
+        },
+        {
+          day: "So", title: "Ruhetag", type: "rest",
+          exercises: [
+            { name: "Kompletter Ruhetag", sets: "-", reps: "-", rest: "-", note: "Schaumbad, Stretching, Schlaf priorisieren" },
+          ]
+        },
+      ]
+    },
+    hypertrophy2: {
+      days: [
+        {
+          day: "Mo", title: "Heavy Upper Pull + Finger", type: "gym",
+          exercises: [
+            { name: "Weighted Pull-ups", sets: 5, reps: "4-6", rest: "3.5min", note: "+5-10% vs Phase I" },
+            { name: "Pendelay Rows", sets: 4, reps: "5-7", rest: "3min", note: "Schwerer als Phase I" },
+            { name: "Max Hangs (20mm)", sets: 5, reps: "10s", rest: "3min", note: "+Gewicht alle 2 Wochen" },
+            { name: "Bizep Curls (schwer)", sets: 3, reps: "6-8", rest: "2min", note: "EZ-Bar oder Langhantel" },
+            { name: "Reverse Wrist Curls", sets: 3, reps: "12-15", rest: "60s", note: "Prophylaxe" },
+          ]
+        },
+        {
+          day: "Di", title: "Bouldern (Intensität)", type: "climb",
+          exercises: [
+            { name: "Aufwärmen: Pyramide", sets: 1, reps: "20min", rest: "-", note: "Leicht → mittel aufbauen" },
+            { name: "Limit Bouldering", sets: 1, reps: "60min", rest: "3-5min/Versuch", note: "Projekte 1-2 Grade über Flash" },
+            { name: "Systemboard", sets: 1, reps: "30min", rest: "2-3min", note: "Spezifische Griffkombinationen" },
+            { name: "Cooldown", sets: 1, reps: "10min", rest: "-", note: "" },
+          ]
+        },
+        {
+          day: "Mi", title: "Aktive Regeneration", type: "rest",
+          exercises: [
+            { name: "Leichtes Cardio", sets: 1, reps: "30min", rest: "-", note: "Zone 2" },
+            { name: "Mobility + Faszienrolle", sets: 1, reps: "20min", rest: "-", note: "" },
+          ]
+        },
+        {
+          day: "Do", title: "Upper Body Hypertrophie", type: "gym",
+          exercises: [
+            { name: "Ring Muscle-up Progressions", sets: 4, reps: "3-5", rest: "3min", note: "Oder explosive Pull-ups" },
+            { name: "Schulterdrücken", sets: 3, reps: "6-8", rest: "2min", note: "Antagonist" },
+            { name: "Superset: Lat Pulldown + Ring Dips", sets: 4, reps: "8+8", rest: "2.5min", note: "Agonist/Antagonist" },
+            { name: "Repeaters (14mm)", sets: 5, reps: "7/3 × 5", rest: "3min", note: "+Gewicht wenn möglich" },
+            { name: "Core Circuit", sets: 3, reps: "3 Übungen", rest: "90s", note: "L-Sit, Leg Raise, Pallof" },
+          ]
+        },
+        {
+          day: "Fr", title: "Bouldern (Projekte)", type: "climb",
+          exercises: [
+            { name: "Aufwärmen", sets: 1, reps: "20min", rest: "-", note: "" },
+            { name: "Projekt-Session", sets: 1, reps: "75min", rest: "-", note: "3-4 Projekte, gute Pausen" },
+            { name: "Leichtes Volumen zum Ausklettern", sets: 1, reps: "20min", rest: "-", note: "Flowige Boulder, Spaß haben" },
+          ]
+        },
+        {
+          day: "Sa", title: "Beine + Prehab", type: "gym",
+          exercises: [
+            { name: "Front Squats", sets: 3, reps: "6-8", rest: "2.5min", note: "Core-Aktivierung" },
+            { name: "Nordic Hamstring Curls", sets: 3, reps: "5-8", rest: "2min", note: "" },
+            { name: "Calf Raises", sets: 3, reps: "15", rest: "60s", note: "Zehenspitzenkraft" },
+            { name: "Shoulder Prehab Circuit", sets: 2, reps: "YTWL × 10", rest: "60s", note: "" },
+            { name: "Handgelenk-Prehab", sets: 2, reps: "Diverse", rest: "-", note: "Flexion, Extension, Rotation" },
+          ]
+        },
+        {
+          day: "So", title: "Ruhetag", type: "rest",
+          exercises: [
+            { name: "Komplett-Ruhetag", sets: "-", reps: "-", rest: "-", note: "Regeneration = Wachstum" },
+          ]
+        },
+      ]
+    },
+    maxstrength: {
+      days: [
+        {
+          day: "Mo", title: "Max Kraft Oberkörper", type: "gym",
+          exercises: [
+            { name: "Weighted Pull-ups", sets: 5, reps: "2-3", rest: "4min", note: "85-90% 1RM" },
+            { name: "One-Arm Lock-off", sets: 4, reps: "3-5s Hold/Arm", rest: "3min", note: "Exzentrisch wenn nötig" },
+            { name: "Max Hangs (20mm)", sets: 5, reps: "7-10s", rest: "3.5min", note: "Nahe Maximum" },
+            { name: "Campus Board: Ladders", sets: 5, reps: "1-3-5-7", rest: "3min", note: "Nur wenn Finger bereit" },
+            { name: "Antagonist Superset", sets: 3, reps: "10+10", rest: "2min", note: "Push-up + Face Pull" },
+          ]
+        },
+        {
+          day: "Di", title: "Bouldern Limit", type: "climb",
+          exercises: [
+            { name: "Aufwärmen", sets: 1, reps: "20min", rest: "-", note: "Gründlich!" },
+            { name: "Limit Bouldering", sets: 1, reps: "75min", rest: "4-5min", note: "Max 3-4 Züge, maximale Intensität" },
+            { name: "Systemboard: Power", sets: 1, reps: "20min", rest: "3min", note: "Explosive Bewegungen" },
+          ]
+        },
+        {
+          day: "Mi", title: "Aktive Regeneration", type: "rest",
+          exercises: [
+            { name: "Leichtes Cardio", sets: 1, reps: "20-30min", rest: "-", note: "Hilft beim Defizit" },
+            { name: "Mobility", sets: 1, reps: "15min", rest: "-", note: "" },
+          ]
+        },
+        {
+          day: "Do", title: "Max Finger + Core", type: "board",
+          exercises: [
+            { name: "Max Hangs (verschiedene Griffe)", sets: 6, reps: "7s", rest: "3.5min", note: "20mm, 14mm, Sloper" },
+            { name: "Campus: Bumps + Touches", sets: 4, reps: "3-5", rest: "3min", note: "Kontaktstart" },
+            { name: "Front Lever", sets: 4, reps: "5-8s", rest: "3min", note: "Volle oder Straddle" },
+            { name: "Dragon Flags", sets: 3, reps: "5-8", rest: "2min", note: "" },
+          ]
+        },
+        {
+          day: "Fr", title: "Bouldern Performance", type: "climb",
+          exercises: [
+            { name: "Aufwärmen", sets: 1, reps: "15min", rest: "-", note: "" },
+            { name: "Flash-Versuche", sets: 1, reps: "45min", rest: "3min", note: "Nahe Flash-Level" },
+            { name: "Projekt-Session", sets: 1, reps: "45min", rest: "4-5min", note: "1-2 Langzeitprojekte" },
+          ]
+        },
+        {
+          day: "Sa", title: "Leichtes Krafttraining + Prehab", type: "gym",
+          exercises: [
+            { name: "Pistol Squats", sets: 3, reps: "5/Seite", rest: "2min", note: "" },
+            { name: "Leichte Pull-ups (Volumen)", sets: 3, reps: "10-12", rest: "90s", note: "Deload für Gelenke" },
+            { name: "Prehab Circuit", sets: 2, reps: "Komplett", rest: "-", note: "Schulter, Ellbogen, Handgelenk" },
+            { name: "Stretching", sets: 1, reps: "20min", rest: "-", note: "" },
+          ]
+        },
+        {
+          day: "So", title: "Ruhetag", type: "rest",
+          exercises: [
+            { name: "Ruhetag", sets: "-", reps: "-", rest: "-", note: "Schlaf 8-9h anpeilen" },
+          ]
+        },
+      ]
+    },
+    performance: {
+      days: [
+        {
+          day: "Mo", title: "Power Maintenance", type: "gym",
+          exercises: [
+            { name: "Weighted Pull-ups", sets: 3, reps: "2-3", rest: "4min", note: "Kraft erhalten, Volumen runter" },
+            { name: "Max Hangs", sets: 4, reps: "7s", rest: "3.5min", note: "Intensität halten" },
+            { name: "Antagonist Maintenance", sets: 2, reps: "12", rest: "90s", note: "Leicht, Gesundheit" },
+          ]
+        },
+        {
+          day: "Di", title: "Bouldern Outdoor/Projekte", type: "climb",
+          exercises: [
+            { name: "Aufwärmen", sets: 1, reps: "20min", rest: "-", note: "" },
+            { name: "Projekt-Session (Outdoor wenn möglich)", sets: 1, reps: "90min", rest: "5min+", note: "Jetzt ernten! Max-Versuche" },
+            { name: "Cooldown", sets: 1, reps: "10min", rest: "-", note: "" },
+          ]
+        },
+        {
+          day: "Mi", title: "Aktive Regeneration", type: "rest",
+          exercises: [
+            { name: "Cardio für Defizit", sets: 1, reps: "30-40min", rest: "-", note: "Zügiges Gehen oder Rad" },
+            { name: "Mobility", sets: 1, reps: "15min", rest: "-", note: "" },
+          ]
+        },
+        {
+          day: "Do", title: "Finger Maintenance + Core", type: "board",
+          exercises: [
+            { name: "Max Hangs (Erhaltung)", sets: 4, reps: "7s", rest: "3min", note: "90% des Woche-10-Levels" },
+            { name: "Core Power", sets: 3, reps: "Diverse", rest: "2min", note: "Front Lever, Toe-to-Bar" },
+          ]
+        },
+        {
+          day: "Fr", title: "Bouldern Performance", type: "climb",
+          exercises: [
+            { name: "Aufwärmen", sets: 1, reps: "15min", rest: "-", note: "" },
+            { name: "Send-Session", sets: 1, reps: "90min", rest: "Voll ausruhen", note: "Projekte senden, neue Grade testen" },
+          ]
+        },
+        {
+          day: "Sa", title: "Optionaler leichter Klettertag", type: "climb",
+          exercises: [
+            { name: "Spaß-Session / Draußen klettern", sets: 1, reps: "60-90min", rest: "-", note: "Nur wenn Körper sich gut anfühlt" },
+          ]
+        },
+        {
+          day: "So", title: "Ruhetag", type: "rest",
+          exercises: [
+            { name: "Ruhetag", sets: "-", reps: "-", rest: "-", note: "Letzte Woche: Retest!" },
+          ]
+        },
+      ]
+    },
+  };
+
+  const phaseId = phase.id.startsWith("hypertrophy") ? (phase.id === "hypertrophy1" ? "hypertrophy1" : "hypertrophy2") : phase.id;
+
+  return {
+    phase,
+    plan: plans[phaseId],
+    nutrition: { totalCal, protein, carbs, fat, surplus, proteinPerKg },
+    week,
+  };
+};
+
+const TypeBadge = ({ type }) => {
+  const styles = {
+    gym: { bg: "#2a1f3d", color: "#c59dff", label: "GYM" },
+    climb: { bg: "#1f2d3d", color: "#5db8e8", label: "CLIMB" },
+    board: { bg: "#2d2a1f", color: "#e8c95d", label: "BOARD" },
+    rest: { bg: "#1f2d22", color: "#6bbd7a", label: "REST" },
+  };
+  const s = styles[type] || styles.rest;
+  return <span style={{ background: s.bg, color: s.color, padding: "2px 8px", borderRadius: "3px", fontSize: "10px", fontWeight: 700, letterSpacing: "1px" }}>{s.label}</span>;
+};
+
+function App() {
+  const [view, setView] = useState("assessment");
+  const [assessment, setAssessment] = useState({});
+  const [weeklyData, setWeeklyData] = useState({});
+  const [selectedWeek, setSelectedWeek] = useState(1);
+  const [completedExercises, setCompletedExercises] = useState({});
+  const [showNutrition, setShowNutrition] = useState(false);
+  const [nutritionWeek, setNutritionWeek] = useState(1);
+  const [nutritionSub, setNutritionSub] = useState("meals");
+  const [checkedMeals, setCheckedMeals] = useState({});
+  const [setProgress, setSetProgress] = useState({}); // { "1-0-2": 3 } = week1, day0, ex2 → 3 sets done
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [saveStatus, setSaveStatus] = useState("");
+  const [timer, setTimer] = useState({ active: false, seconds: 0, total: 0, exercise: "", exKey: "" });
+
+  // Timer logic
+  const parseRestTime = (rest) => {
+    if (!rest || rest === "-") return 0;
+    const s = rest.toString().toLowerCase().replace(/\s/g, "");
+    if (s.includes("min")) {
+      const num = parseFloat(s.replace("min", ""));
+      return Math.round(num * 60);
+    }
+    if (s.includes("s")) return parseInt(s.replace("s", ""), 10);
+    return parseInt(s, 10) || 0;
+  };
+
+  const startTimer = (seconds, exerciseName, exKey, totalSets) => {
+    setTimer({ active: true, seconds, total: seconds, exercise: exerciseName, exKey, totalSets: totalSets || 0 });
+  };
+
+  const stopTimer = () => {
+    setTimer({ active: false, seconds: 0, total: 0, exercise: "", exKey: "" });
+  };
+
+  // When timer completes → increment set counter, auto-complete if all sets done
+  const onTimerComplete = (exKey, totalSets) => {
+    setSetProgress(prev => {
+      const current = (prev[exKey] || 0) + 1;
+      const updated = { ...prev, [exKey]: current };
+      // Auto-complete when all sets done
+      if (totalSets > 0 && current >= totalSets) {
+        setCompletedExercises(prev2 => ({ ...prev2, [exKey]: true }));
+      }
+      return updated;
+    });
+  };
+
+  useEffect(() => {
+    if (timer.active && timer.seconds > 0) {
+      const id = setInterval(() => {
+        setTimer(prev => {
+          if (prev.seconds <= 1) {
+            clearInterval(id);
+            // Beep
+            try {
+              const ctx = new (window.AudioContext || window.webkitAudioContext)();
+              [0, 0.15, 0.3].forEach(delay => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = delay === 0.3 ? 880 : 660;
+                gain.gain.value = 0.3;
+                osc.start(ctx.currentTime + delay);
+                osc.stop(ctx.currentTime + delay + 0.12);
+              });
+            } catch(e) {}
+            // Increment set counter
+            if (prev.exKey) onTimerComplete(prev.exKey, prev.totalSets || 0);
+            return { ...prev, active: false, seconds: 0 };
+          }
+          return { ...prev, seconds: prev.seconds - 1 };
+        });
+      }, 1000);
+      return () => clearInterval(id);
+    }
+  }, [timer.active]);
+
+  // Load all data on mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const keys = ["ic-assessment", "ic-weeklyData", "ic-completedExercises", "ic-checkedMeals", "ic-setProgress", "ic-view", "ic-selectedWeek"];
+        const results = {};
+        for (const key of keys) {
+          try {
+            const raw = localStorage.getItem(key); const r = raw ? { value: raw } : null;
+            if (r && r.value) results[key] = JSON.parse(r.value);
+          } catch (e) { /* key doesn't exist yet */ }
+        }
+        if (results["ic-assessment"]) setAssessment(results["ic-assessment"]);
+        if (results["ic-weeklyData"]) setWeeklyData(results["ic-weeklyData"]);
+        if (results["ic-completedExercises"]) setCompletedExercises(results["ic-completedExercises"]);
+        if (results["ic-checkedMeals"]) setCheckedMeals(results["ic-checkedMeals"]);
+        if (results["ic-setProgress"]) setSetProgress(results["ic-setProgress"]);
+        if (results["ic-view"]) setView(results["ic-view"]);
+        if (results["ic-selectedWeek"]) setSelectedWeek(results["ic-selectedWeek"]);
+      } catch (e) {
+        console.log("Storage not available, using in-memory state");
+      }
+      setLoaded(true);
+    };
+    loadData();
+  }, []);
+
+  // Auto-save helper
+  const saveToStorage = useCallback(async (key, data) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(data));
+    } catch (e) { /* storage unavailable */ }
+  }, []);
+
+  // Save on changes (only after initial load)
+  useEffect(() => { if (loaded) saveToStorage("ic-assessment", assessment); }, [assessment, loaded, saveToStorage]);
+  useEffect(() => { if (loaded) saveToStorage("ic-weeklyData", weeklyData); }, [weeklyData, loaded, saveToStorage]);
+  useEffect(() => { if (loaded) saveToStorage("ic-completedExercises", completedExercises); }, [completedExercises, loaded, saveToStorage]);
+  useEffect(() => { if (loaded) saveToStorage("ic-checkedMeals", checkedMeals); }, [checkedMeals, loaded, saveToStorage]);
+  useEffect(() => { if (loaded) saveToStorage("ic-setProgress", setProgress); }, [setProgress, loaded, saveToStorage]);
+  useEffect(() => { if (loaded) saveToStorage("ic-view", view); }, [view, loaded, saveToStorage]);
+  useEffect(() => { if (loaded) saveToStorage("ic-selectedWeek", selectedWeek); }, [selectedWeek, loaded, saveToStorage]);
+
+  // Manual save feedback
+  const handleManualSave = async () => {
+    setSaveStatus("saving");
+    try {
+      await saveToStorage("ic-assessment", assessment);
+      await saveToStorage("ic-weeklyData", weeklyData);
+      await saveToStorage("ic-completedExercises", completedExercises);
+      await saveToStorage("ic-checkedMeals", checkedMeals);
+      await saveToStorage("ic-setProgress", setProgress);
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus(""), 2000);
+    } catch (e) {
+      setSaveStatus("error");
+      setTimeout(() => setSaveStatus(""), 3000);
+    }
+  };
+
+  // Reset all data
+  const handleReset = async () => {
+    setAssessment({});
+    setWeeklyData({});
+    setCompletedExercises({});
+    setCheckedMeals({});
+    setSetProgress({});
+    setView("assessment");
+    setSelectedWeek(1);
+    setShowResetConfirm(false);
+    try {
+      for (const key of ["ic-assessment", "ic-weeklyData", "ic-completedExercises", "ic-checkedMeals", "ic-setProgress", "ic-view", "ic-selectedWeek"]) {
+        localStorage.removeItem(key);
+      }
+    } catch (e) { /* ok */ }
+  };
+
+  const handleAssessmentChange = (id, value) => {
+    setAssessment(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleWeeklyDataChange = (week, field, value) => {
+    setWeeklyData(prev => ({
+      ...prev,
+      [week]: { ...(prev[week] || {}), [field]: value }
+    }));
+  };
+
+  const toggleExercise = (week, dayIdx, exIdx) => {
+    const key = `${week}-${dayIdx}-${exIdx}`;
+    setCompletedExercises(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const getPhaseForWeek = (w) => PHASES.find(p => p.weeks.includes(w));
+
+  const weekPlan = generateWeeklyPlan(selectedWeek, assessment);
+
+  const progressData = Array.from({ length: 12 }, (_, i) => {
+    const w = i + 1;
+    const d = weeklyData[w] || {};
+    return {
+      week: `W${w}`,
+      gewicht: d.bodyweight ? parseFloat(d.bodyweight) : null,
+      pullup: d.pullupMax ? parseFloat(d.pullupMax) : null,
+      hangMax: d.hangMax ? parseFloat(d.hangMax) : null,
+    };
+  });
+
+  const hasProgress = progressData.some(d => d.gewicht || d.pullup || d.hangMax);
+
+  const assessmentComplete = assessment.bodyweight && assessment.boulderGrade;
+
+  const radarData = [
+    { metric: "Pull-ups", value: Math.min((parseFloat(assessment.maxPullups) || 0) / 25 * 100, 100), fullMark: 100 },
+    { metric: "Finger 20mm", value: Math.min((parseFloat(assessment.maxHangTime) || 0) / 45 * 100, 100), fullMark: 100 },
+    { metric: "1RM Pull", value: Math.min((parseFloat(assessment.weightedPullup) || 0) / 50 * 100, 100), fullMark: 100 },
+    { metric: "Core", value: Math.min((parseFloat(assessment.coreHold) || 0) / 30 * 100, 100), fullMark: 100 },
+    { metric: "Push", value: Math.min((parseFloat(assessment.pushups) || 0) / 50 * 100, 100), fullMark: 100 },
+    { metric: "Finger +kg", value: Math.min((parseFloat(assessment.fingerStrength) || 0) / 40 * 100, 100), fullMark: 100 },
+  ];
+
+  return (
+    <div style={{
+      fontFamily: "'JetBrains Mono', 'SF Mono', 'Fira Code', monospace",
+      background: "#0d0f11",
+      color: "#e8e6e1",
+      minHeight: "100vh",
+      maxWidth: "100%",
+      overflow: "hidden",
+    }}>
+
+      {/* Loading Screen */}
+      {!loaded && (
+        <div style={{
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+          minHeight: "100vh", gap: "16px",
+        }}>
+          <div style={{ fontFamily: "'Space Grotesk'", fontSize: "24px", fontWeight: 700, color: "#e85d26" }}>◈ INNERCRUX → SEND</div>
+          <div style={{ fontSize: "11px", color: "#666", letterSpacing: "2px" }}>DATEN WERDEN GELADEN...</div>
+          <div style={{ width: "120px", height: "3px", background: "#1f2225", borderRadius: "2px", overflow: "hidden" }}>
+            <div style={{ width: "60%", height: "100%", background: "#e85d26", borderRadius: "2px", animation: "pulse 1s ease-in-out infinite alternate" }} />
+          </div>
+        </div>
+      )}
+
+      {loaded && <>
+      {/* Header */}
+      <div style={{
+        background: "linear-gradient(135deg, #1a1c20 0%, #0d0f11 100%)",
+        borderBottom: "1px solid #2a2d33",
+        padding: "12px 16px",
+        position: "sticky",
+        top: 0,
+        zIndex: 100,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px", marginBottom: "8px" }}>
+          <div>
+            <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "18px", fontWeight: 700, color: "#e85d26", letterSpacing: "-0.5px" }}>
+              ◈ INNERCRUX → SEND
+            </div>
+            <div style={{ fontSize: "9px", color: "#666", letterSpacing: "2px", marginTop: "1px" }}>12-WOCHEN KLETTERTRAINING</div>
+          </div>
+          <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+            <button
+              onClick={handleManualSave}
+              style={{
+                padding: "5px 10px",
+                background: saveStatus === "saved" ? "#1a2d1a" : saveStatus === "error" ? "#2d1a1a" : "#13151a",
+                color: saveStatus === "saved" ? "#6bbd7a" : saveStatus === "error" ? "#e85d26" : "#888",
+                border: `1px solid ${saveStatus === "saved" ? "#2a5a3a" : saveStatus === "error" ? "#5a2a2a" : "#2a2d33"}`,
+                borderRadius: "4px",
+                fontSize: "9px",
+                fontWeight: 600,
+                letterSpacing: "1px",
+                cursor: "pointer",
+                fontFamily: "inherit",
+                transition: "all 0.3s",
+              }}
+            >
+              {saveStatus === "saving" ? "..." : saveStatus === "saved" ? "✓ GESPEICHERT" : saveStatus === "error" ? "✗ FEHLER" : "💾 SPEICHERN"}
+            </button>
+            <button
+              onClick={() => setShowResetConfirm(true)}
+              style={{
+                padding: "5px 10px",
+                background: "#13151a",
+                color: "#666",
+                border: "1px solid #2a2d33",
+                borderRadius: "4px",
+                fontSize: "9px",
+                fontWeight: 600,
+                letterSpacing: "1px",
+                cursor: "pointer",
+                fontFamily: "inherit",
+              }}
+            >
+              ↺ RESET
+            </button>
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: "3px", flexWrap: "wrap" }}>
+          {[
+            { id: "assessment", label: "ASSESSMENT" },
+            { id: "plan", label: "TRAINING" },
+            { id: "nutrition", label: "ERNÄHRUNG" },
+            { id: "progress", label: "FORTSCHRITT" },
+            { id: "glossary", label: "LEGENDE" },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setView(tab.id)}
+              style={{
+                padding: "6px 10px",
+                background: view === tab.id ? "#e85d26" : "#1a1c20",
+                color: view === tab.id ? "#fff" : "#888",
+                border: `1px solid ${view === tab.id ? "#e85d26" : "#2a2d33"}`,
+                borderRadius: "4px",
+                fontSize: "9px",
+                fontWeight: 600,
+                letterSpacing: "0.8px",
+                cursor: "pointer",
+                fontFamily: "inherit",
+                transition: "all 0.2s",
+              }}
+            >
+              {tab.label}
+              </button>
+            ))}
+        </div>
+      </div>
+
+      {/* Floating Mini Timer - only while active */}
+
+      {/* Reset Confirmation Modal */}
+      {showResetConfirm && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 300,
+          background: "rgba(0,0,0,0.7)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          padding: "20px",
+        }}>
+          <div style={{
+            background: "#1a1c20", borderRadius: "12px",
+            border: "1px solid #2a2d33", padding: "24px",
+            maxWidth: "340px", width: "100%",
+            textAlign: "center",
+          }}>
+            <div style={{ fontSize: "24px", marginBottom: "12px" }}>⚠</div>
+            <div style={{ fontFamily: "'Space Grotesk'", fontSize: "15px", fontWeight: 600, color: "#e8e6e1", marginBottom: "8px" }}>
+              Alle Daten zurücksetzen?
+            </div>
+            <div style={{ fontSize: "11px", color: "#888", marginBottom: "20px", lineHeight: 1.5 }}>
+              Assessment, Trainingsfortschritt, Sets und Ernährungs-Tracking werden unwiderruflich gelöscht.
+            </div>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button
+                onClick={() => setShowResetConfirm(false)}
+                style={{
+                  flex: 1, padding: "10px",
+                  background: "#13151a", border: "1px solid #2a2d33", borderRadius: "8px",
+                  color: "#888", fontSize: "12px", fontWeight: 600,
+                  cursor: "pointer", fontFamily: "inherit",
+                }}
+              >ABBRECHEN</button>
+              <button
+                onClick={handleReset}
+                style={{
+                  flex: 1, padding: "10px",
+                  background: "#2d1a1a", border: "1px solid #5a2a2a", borderRadius: "8px",
+                  color: "#e85d26", fontSize: "12px", fontWeight: 600,
+                  cursor: "pointer", fontFamily: "inherit",
+                }}
+              >RESET</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {timer.active && (
+        <div style={{
+          position: "fixed",
+          bottom: 0, left: 0, right: 0,
+          zIndex: 200,
+          padding: "8px 16px 12px",
+          background: "linear-gradient(180deg, rgba(13,15,17,0) 0%, #0d0f11 10%)",
+        }}>
+          <div
+            onClick={stopTimer}
+            style={{
+              maxWidth: "900px", margin: "0 auto",
+              background: "#1a1c20",
+              borderRadius: "10px",
+              border: "1px solid #2a2d33",
+              padding: "10px 14px",
+              display: "flex", alignItems: "center", gap: "12px",
+              cursor: "pointer",
+              boxShadow: "0 -2px 16px rgba(0,0,0,0.4)",
+            }}
+          >
+            <div style={{ position: "relative", width: "32px", height: "32px", flexShrink: 0 }}>
+              <svg width="32" height="32" style={{ transform: "rotate(-90deg)" }}>
+                <circle cx="16" cy="16" r="13" fill="none" stroke="#1f2225" strokeWidth="2" />
+                <circle cx="16" cy="16" r="13" fill="none" stroke="#e85d26" strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeDasharray={`${2 * Math.PI * 13}`}
+                  strokeDashoffset={`${2 * Math.PI * 13 * (1 - timer.seconds / timer.total)}`}
+                  style={{ transition: "stroke-dashoffset 0.5s linear" }}
+                />
+              </svg>
+              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Space Grotesk'", fontSize: "9px", fontWeight: 700, color: "#e8e6e1" }}>
+                {timer.seconds < 60 ? timer.seconds : `${Math.floor(timer.seconds/60)}:${(timer.seconds%60).toString().padStart(2,"0")}`}
+              </div>
+            </div>
+            <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
+              <div style={{ fontSize: "9px", color: "#e85d26", letterSpacing: "1px", fontWeight: 700 }}>⏱ PAUSE</div>
+              <div style={{ fontSize: "11px", color: "#ccc", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{timer.exercise}</div>
+            </div>
+            <span style={{ fontSize: "10px", color: "#555", flexShrink: 0 }}>✕ STOP</span>
+          </div>
+        </div>
+      )}
+
+      <div style={{ padding: "20px", maxWidth: "900px", margin: "0 auto", paddingBottom: timer.active ? "80px" : "20px" }}>
+
+        {/* ASSESSMENT VIEW */}
+        {view === "assessment" && (
+          <div>
+            <div style={{ marginBottom: "24px" }}>
+              <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "18px", fontWeight: 600, color: "#e85d26", margin: "0 0 8px" }}>
+                Eingangs-Assessment
+              </h2>
+              <p style={{ fontSize: "12px", color: "#888", margin: 0, lineHeight: 1.6 }}>
+                Trage deine aktuellen Werte ein. Diese dienen als Baseline für den Trainingsplan und zur Berechnung deiner Ernährung. Am Ende der 12 Wochen wiederholst du den Test.
+              </p>
+            </div>
+
+            {["Kraft", "Finger", "Core", "Antagonist", "Körper", "Klettern"].map(cat => (
+              <div key={cat} style={{ marginBottom: "20px" }}>
+                <div style={{
+                  fontSize: "10px",
+                  color: "#e85d26",
+                  letterSpacing: "2px",
+                  fontWeight: 700,
+                  marginBottom: "10px",
+                  paddingBottom: "4px",
+                  borderBottom: "1px solid #1f2225",
+                }}>
+                  {cat.toUpperCase()}
+                </div>
+                {ASSESSMENT_TESTS.filter(t => t.category === cat).map(test => (
+                  <div key={test.id} style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                    padding: "10px 12px",
+                    background: "#13151a",
+                    borderRadius: "6px",
+                    marginBottom: "6px",
+                    border: "1px solid #1f2225",
+                  }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: "12px", fontWeight: 500, color: "#ccc" }}>{test.label}</div>
+                      <div style={{ fontSize: "10px", color: "#666", marginTop: "2px" }}>{test.tip}</div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      {test.id === "boulderGrade" ? (
+                        <select
+                          value={assessment[test.id] || ""}
+                          onChange={e => handleAssessmentChange(test.id, e.target.value)}
+                          style={{
+                            width: "90px",
+                            padding: "6px 8px",
+                            background: "#0d0f11",
+                            border: "1px solid #2a2d33",
+                            borderRadius: "4px",
+                            color: "#e8e6e1",
+                            fontSize: "13px",
+                            fontFamily: "inherit",
+                          }}
+                        >
+                          <option value="">—</option>
+                          {GRADE_OPTIONS.map(g => <option key={g} value={g}>{g}</option>)}
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          placeholder="—"
+                          value={assessment[test.id] || ""}
+                          onChange={e => handleAssessmentChange(test.id, e.target.value)}
+                          style={{
+                            width: "70px",
+                            padding: "6px 8px",
+                            background: "#0d0f11",
+                            border: "1px solid #2a2d33",
+                            borderRadius: "4px",
+                            color: "#e8e6e1",
+                            fontSize: "13px",
+                            fontFamily: "inherit",
+                            textAlign: "right",
+                          }}
+                        />
+                      )}
+                      <span style={{ fontSize: "10px", color: "#666", width: "30px" }}>{test.unit}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
+
+            {/* Radar Chart */}
+            {(assessment.maxPullups || assessment.maxHangTime || assessment.weightedPullup) && (
+              <div style={{
+                background: "#13151a",
+                borderRadius: "8px",
+                border: "1px solid #1f2225",
+                padding: "16px",
+                marginTop: "20px",
+              }}>
+                <div style={{ fontSize: "10px", color: "#e85d26", letterSpacing: "2px", fontWeight: 700, marginBottom: "10px" }}>
+                  STÄRKEN-PROFIL
+                </div>
+                <div style={{ display: "flex", justifyContent: "center" }}>
+                  <SvgRadarChart data={radarData} />
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={() => { if (assessmentComplete) setView("plan"); }}
+              style={{
+                width: "100%",
+                padding: "14px",
+                marginTop: "20px",
+                background: assessmentComplete ? "#e85d26" : "#2a2d33",
+                color: assessmentComplete ? "#fff" : "#666",
+                border: "none",
+                borderRadius: "6px",
+                fontSize: "12px",
+                fontWeight: 700,
+                letterSpacing: "2px",
+                cursor: assessmentComplete ? "pointer" : "default",
+                fontFamily: "inherit",
+                transition: "all 0.2s",
+              }}
+            >
+              {assessmentComplete ? "→ ZUM TRAININGSPLAN" : "KÖRPERGEWICHT + BOULDERLEVEL EINGEBEN"}
+            </button>
+          </div>
+        )}
+
+        {/* PLAN VIEW */}
+        {view === "plan" && (
+          <div>
+            {/* Phase Timeline */}
+            <div style={{ marginBottom: "24px" }}>
+              <div style={{ display: "flex", gap: "2px", marginBottom: "12px" }}>
+                {PHASES.map(phase => (
+                  <div key={phase.id} style={{ flex: phase.weeks.length, textAlign: "center" }}>
+                    <div style={{ fontSize: "9px", color: phase.color, letterSpacing: "1px", fontWeight: 700, marginBottom: "4px" }}>
+                      {phase.name.toUpperCase()}
+                    </div>
+                    <div style={{ display: "flex", gap: "2px" }}>
+                      {phase.weeks.map(w => (
+                        <button
+                          key={w}
+                          onClick={() => setSelectedWeek(w)}
+                          style={{
+                            flex: 1,
+                            padding: "8px 0",
+                            background: selectedWeek === w ? phase.color : `${phase.color}15`,
+                            color: selectedWeek === w ? "#fff" : phase.color,
+                            border: `1px solid ${selectedWeek === w ? phase.color : phase.color + "30"}`,
+                            borderRadius: "3px",
+                            fontSize: "11px",
+                            fontWeight: selectedWeek === w ? 700 : 400,
+                            cursor: "pointer",
+                            fontFamily: "inherit",
+                            transition: "all 0.15s",
+                          }}
+                        >
+                          {w}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {weekPlan && (
+              <>
+                {/* Week Header */}
+                <div style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "16px",
+                  flexWrap: "wrap",
+                  gap: "8px"
+                }}>
+                  <div>
+                    <div style={{ fontFamily: "'Space Grotesk'", fontSize: "22px", fontWeight: 700, color: weekPlan.phase.color }}>
+                      Woche {selectedWeek}
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#888" }}>
+                      {weekPlan.phase.icon} {weekPlan.phase.name} — {weekPlan.phase.desc}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowNutrition(!showNutrition)}
+                    style={{
+                      padding: "8px 14px",
+                      background: showNutrition ? "#1a3d2a" : "#13151a",
+                      color: showNutrition ? "#6bbd7a" : "#888",
+                      border: `1px solid ${showNutrition ? "#2a5a3a" : "#2a2d33"}`,
+                      borderRadius: "4px",
+                      fontSize: "10px",
+                      fontWeight: 600,
+                      letterSpacing: "1px",
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                    }}
+                  >
+                    {showNutrition ? "✓ " : ""}ERNÄHRUNG
+                  </button>
+                </div>
+
+                {/* Nutrition Panel */}
+                {showNutrition && (
+                  <div style={{
+                    background: "#13151a",
+                    borderRadius: "8px",
+                    border: "1px solid #1f2225",
+                    padding: "16px",
+                    marginBottom: "16px",
+                  }}>
+                    <div style={{ fontSize: "10px", color: "#6bbd7a", letterSpacing: "2px", fontWeight: 700, marginBottom: "12px" }}>
+                      ERNÄHRUNGSPLAN — {weekPlan.nutrition.surplus > 0 ? `+${weekPlan.nutrition.surplus} KCAL ÜBERSCHUSS` : `${weekPlan.nutrition.surplus} KCAL DEFIZIT`}
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px" }}>
+                      {[
+                        { label: "KALORIEN", value: weekPlan.nutrition.totalCal, unit: "kcal", color: "#e85d26" },
+                        { label: "PROTEIN", value: weekPlan.nutrition.protein, unit: `g (${weekPlan.nutrition.proteinPerKg}g/kg)`, color: "#5db8e8" },
+                        { label: "KOHLENHYDRATE", value: weekPlan.nutrition.carbs, unit: "g", color: "#e8c95d" },
+                        { label: "FETT", value: weekPlan.nutrition.fat, unit: "g", color: "#c59dff" },
+                      ].map(m => (
+                        <div key={m.label} style={{
+                          background: "#0d0f11",
+                          borderRadius: "6px",
+                          padding: "12px 10px",
+                          textAlign: "center",
+                          border: `1px solid ${m.color}20`,
+                        }}>
+                          <div style={{ fontSize: "9px", color: "#666", letterSpacing: "1px", marginBottom: "6px" }}>{m.label}</div>
+                          <div style={{ fontFamily: "'Space Grotesk'", fontSize: "22px", fontWeight: 700, color: m.color }}>{m.value}</div>
+                          <div style={{ fontSize: "9px", color: "#666" }}>{m.unit}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#888", marginTop: "12px", lineHeight: 1.6 }}>
+                      {weekPlan.nutrition.surplus > 0 ? (
+                        <>
+                          <strong style={{ color: "#6bbd7a" }}>Aufbauphase:</strong> Fokus auf ausreichend Protein für Muskelaufbau. 
+                          Mahlzeiten um Training planen. Post-Workout: 30-40g Protein + Kohlenhydrate innerhalb 1h. 
+                          Mikronährstoffe nicht vergessen: Gemüse, Obst, Nüsse. Kreatin 5g/Tag empfohlen.
+                        </>
+                      ) : (
+                        <>
+                          <strong style={{ color: "#e85d26" }}>Defizit-Phase:</strong> Protein HOCH halten um Muskelverlust zu minimieren. 
+                          Langsam abnehmen (max 0.5kg/Woche). Refeeds alle 7-10 Tage bei Bedarf. 
+                          Fett nicht unter 0.8g/kg drücken (Hormone!). Kreatin weiter nehmen.
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Daily Plans */}
+                {weekPlan.plan.days.map((day, dayIdx) => (
+                  <div key={dayIdx} style={{
+                    background: "#13151a",
+                    borderRadius: "8px",
+                    border: "1px solid #1f2225",
+                    marginBottom: "8px",
+                    overflow: "hidden",
+                  }}>
+                    <div style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "12px 14px",
+                      borderBottom: day.type !== "rest" ? "1px solid #1f2225" : "none",
+                      background: "#16181d",
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <span style={{
+                          fontFamily: "'Space Grotesk'",
+                          fontSize: "14px",
+                          fontWeight: 700,
+                          color: weekPlan.phase.color,
+                          width: "28px",
+                        }}>
+                          {day.day}
+                        </span>
+                        <span style={{ fontSize: "12px", fontWeight: 500, color: "#ccc" }}>{day.title}</span>
+                      </div>
+                      <TypeBadge type={day.type} />
+                    </div>
+
+                    {day.type !== "rest" || day.exercises.length > 1 ? (
+                      <div style={{ padding: "4px 0" }}>
+                        {day.exercises.map((ex, exIdx) => {
+                          const exKey = `${selectedWeek}-${dayIdx}-${exIdx}`;
+                          const isComplete = completedExercises[exKey];
+                          const restSecs = parseRestTime(ex.rest);
+                          const totalSets = typeof ex.sets === "number" ? ex.sets : parseInt(ex.sets, 10) || 0;
+                          const doneSets = setProgress[exKey] || 0;
+                          const isTimerHere = timer.exKey === exKey;
+                          const isTimerActive = timer.active && isTimerHere;
+                          const setsRemaining = Math.max(0, totalSets - doneSets);
+                          return (
+                            <div
+                              key={exIdx}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                padding: "7px 10px 7px 14px",
+                                borderBottom: exIdx < day.exercises.length - 1 ? "1px solid #1a1c20" : "none",
+                                opacity: isComplete ? 0.4 : 1,
+                                transition: "all 0.15s",
+                                gap: "8px",
+                              }}
+                            >
+                              {/* Checkbox */}
+                              <div
+                                onClick={() => toggleExercise(selectedWeek, dayIdx, exIdx)}
+                                style={{
+                                  width: "16px", height: "16px", borderRadius: "3px",
+                                  border: `1.5px solid ${isComplete ? weekPlan.phase.color : "#3a3d43"}`,
+                                  background: isComplete ? weekPlan.phase.color : "transparent",
+                                  flexShrink: 0, cursor: "pointer",
+                                  display: "flex", alignItems: "center", justifyContent: "center",
+                                  fontSize: "10px", color: "#fff",
+                                }}>
+                                {isComplete && "✓"}
+                              </div>
+
+                              {/* Name + note */}
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{
+                                  fontSize: "11px", fontWeight: 500,
+                                  color: isComplete ? "#555" : "#ddd",
+                                  textDecoration: isComplete ? "line-through" : "none",
+                                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                                }}>
+                                  {ex.name}
+                                </div>
+                                {ex.note && (
+                                  <div style={{ fontSize: "9px", color: "#4a4d53", marginTop: "1px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ex.note}</div>
+                                )}
+                              </div>
+
+                              {/* Compact stats */}
+                              <div style={{ display: "flex", gap: "6px", flexShrink: 0, alignItems: "center", fontSize: "10px" }}>
+                                {totalSets > 0 && (
+                                  <span style={{ color: isComplete ? "#444" : weekPlan.phase.color, fontWeight: 700, minWidth: "20px", textAlign: "center" }}>
+                                    {isComplete ? totalSets : <>{doneSets}<span style={{ color: "#444" }}>/{totalSets}</span></>}
+                                  </span>
+                                )}
+                                {ex.reps && ex.reps !== "-" && (
+                                  <span style={{ color: isComplete ? "#444" : "#999", fontSize: "9px" }}>
+                                    ×{ex.reps}
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Round timer button */}
+                              {restSecs > 0 && !isComplete ? (
+                                isTimerActive ? (
+                                  <div
+                                    onClick={(e) => { e.stopPropagation(); stopTimer(); }}
+                                    style={{
+                                      width: "44px", height: "44px", borderRadius: "50%",
+                                      background: "#13151a", flexShrink: 0, cursor: "pointer",
+                                      display: "flex", alignItems: "center", justifyContent: "center",
+                                      position: "relative",
+                                    }}
+                                  >
+                                    <svg width="44" height="44" style={{ position: "absolute", transform: "rotate(-90deg)" }}>
+                                      <circle cx="22" cy="22" r="19" fill="none" stroke="#1f2225" strokeWidth="2.5" />
+                                      <circle cx="22" cy="22" r="19" fill="none" stroke={weekPlan.phase.color} strokeWidth="2.5"
+                                        strokeLinecap="round"
+                                        strokeDasharray={`${2 * Math.PI * 19}`}
+                                        strokeDashoffset={`${2 * Math.PI * 19 * (1 - timer.seconds / timer.total)}`}
+                                        style={{ transition: "stroke-dashoffset 0.5s linear" }}
+                                      />
+                                    </svg>
+                                    <span style={{
+                                      fontFamily: "'Space Grotesk'", fontSize: "11px", fontWeight: 700,
+                                      color: "#e8e6e1", zIndex: 1,
+                                    }}>
+                                      {timer.seconds < 60 ? timer.seconds : `${Math.floor(timer.seconds/60)}:${(timer.seconds%60).toString().padStart(2,"0")}`}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <div
+                                    onClick={(e) => { e.stopPropagation(); startTimer(restSecs, ex.name, exKey, totalSets); }}
+                                    style={{
+                                      width: "44px", height: "44px", borderRadius: "50%",
+                                      background: "#1a1c20", border: `2px solid ${weekPlan.phase.color}40`,
+                                      flexShrink: 0, cursor: "pointer",
+                                      display: "flex", flexDirection: "column",
+                                      alignItems: "center", justifyContent: "center",
+                                      transition: "all 0.2s",
+                                    }}
+                                  >
+                                    <span style={{ fontSize: "10px", color: weekPlan.phase.color, fontWeight: 700, lineHeight: 1 }}>▶</span>
+                                    <span style={{ fontSize: "8px", color: "#666", lineHeight: 1, marginTop: "1px" }}>{ex.rest}</span>
+                                  </div>
+                                )
+                              ) : (
+                                <div style={{ width: "44px", flexShrink: 0 }} />
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div style={{ padding: "12px 14px", fontSize: "11px", color: "#666" }}>
+                        {day.exercises[0]?.note || "Regeneration"}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* PROGRESS VIEW */}
+        {view === "nutrition" && (() => {
+          const nutPhase = PHASES.find(p => p.weeks.includes(nutritionWeek));
+          const isCutting = nutPhase && (nutPhase.id === "maxstrength" || nutPhase.id === "performance");
+          const mealPlan = isCutting ? MEAL_PLANS.cutting : MEAL_PLANS.hypertrophy;
+          const bw = parseFloat(assessment.bodyweight) || 70;
+          const surplus = !isCutting ? 400 : nutPhase.id === "maxstrength" ? -200 : -400;
+          const baseCal = Math.round(bw * 32);
+          const totalCal = baseCal + surplus;
+          const proteinPerKg = !isCutting ? 2.2 : 2.5;
+          const protein = Math.round(bw * proteinPerKg);
+          const fat = Math.round((totalCal * 0.28) / 9);
+          const carbs = Math.round((totalCal - protein * 4 - fat * 9) / 4);
+
+          return (
+          <div>
+            {/* Phase Timeline (same as training) */}
+            <div style={{ marginBottom: "20px" }}>
+              <div style={{ display: "flex", gap: "2px", marginBottom: "12px" }}>
+                {PHASES.map(phase => (
+                  <div key={phase.id} style={{ flex: phase.weeks.length, textAlign: "center" }}>
+                    <div style={{ fontSize: "9px", color: phase.color, letterSpacing: "1px", fontWeight: 700, marginBottom: "4px" }}>
+                      {phase.name.toUpperCase()}
+                    </div>
+                    <div style={{ display: "flex", gap: "2px" }}>
+                      {phase.weeks.map(w => (
+                        <button
+                          key={w}
+                          onClick={() => setNutritionWeek(w)}
+                          style={{
+                            flex: 1,
+                            padding: "8px 0",
+                            background: nutritionWeek === w ? phase.color : `${phase.color}15`,
+                            color: nutritionWeek === w ? "#fff" : phase.color,
+                            border: `1px solid ${nutritionWeek === w ? phase.color : phase.color + "30"}`,
+                            borderRadius: "3px",
+                            fontSize: "11px",
+                            fontWeight: nutritionWeek === w ? 700 : 400,
+                            cursor: "pointer",
+                            fontFamily: "inherit",
+                          }}
+                        >
+                          {w}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Phase Info + Macro Overview */}
+            <div style={{
+              background: isCutting ? "linear-gradient(135deg, #1a1520 0%, #13151a 100%)" : "linear-gradient(135deg, #1a2015 0%, #13151a 100%)",
+              borderRadius: "8px",
+              border: `1px solid ${isCutting ? "#3d2a1f" : "#2a3d1f"}`,
+              padding: "16px",
+              marginBottom: "16px",
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "8px" }}>
+                <div>
+                  <div style={{ fontFamily: "'Space Grotesk'", fontSize: "16px", fontWeight: 700, color: nutPhase.color }}>
+                    Woche {nutritionWeek} — {mealPlan.label}
+                  </div>
+                  <div style={{ fontSize: "10px", color: "#888", marginTop: "2px" }}>
+                    {nutPhase.icon} {nutPhase.name} · {surplus > 0 ? `+${surplus}` : surplus} kcal {surplus > 0 ? "Überschuss" : "Defizit"}
+                  </div>
+                </div>
+                <div style={{
+                  padding: "4px 10px",
+                  background: isCutting ? "#2d1a1a" : "#1a2d1a",
+                  borderRadius: "4px",
+                  fontSize: "10px",
+                  fontWeight: 700,
+                  color: isCutting ? "#e85d26" : "#6bbd7a",
+                  letterSpacing: "1px",
+                }}>
+                  {isCutting ? "▼ CUTTING" : "▲ BULKING"}
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6px", marginBottom: "14px" }}>
+                {[
+                  { label: "KALORIEN", value: totalCal, unit: "kcal", color: "#e85d26" },
+                  { label: "PROTEIN", value: protein, unit: `g · ${proteinPerKg}g/kg`, color: "#5db8e8" },
+                  { label: "CARBS", value: carbs, unit: "g", color: "#e8c95d" },
+                  { label: "FETT", value: fat, unit: "g", color: "#c59dff" },
+                ].map(m => (
+                  <div key={m.label} style={{
+                    background: "#0d0f11",
+                    borderRadius: "6px",
+                    padding: "10px 8px",
+                    textAlign: "center",
+                    border: `1px solid ${m.color}15`,
+                  }}>
+                    <div style={{ fontSize: "8px", color: "#555", letterSpacing: "1px" }}>{m.label}</div>
+                    <div style={{ fontFamily: "'Space Grotesk'", fontSize: "20px", fontWeight: 700, color: m.color, margin: "2px 0" }}>{m.value}</div>
+                    <div style={{ fontSize: "8px", color: "#555" }}>{m.unit}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ fontSize: "11px", color: "#999", lineHeight: 1.6 }}>
+                {mealPlan.principle}
+              </div>
+            </div>
+
+            {/* Sub-navigation */}
+            <div style={{ display: "flex", gap: "4px", marginBottom: "16px" }}>
+              {[
+                { id: "meals", label: "MAHLZEITEN" },
+                { id: "tips", label: "TIPPS & REGELN" },
+                { id: "shopping", label: "EINKAUFSLISTE" },
+              ].map(sub => (
+                <button
+                  key={sub.id}
+                  onClick={() => setNutritionSub(sub.id)}
+                  style={{
+                    flex: 1,
+                    padding: "8px",
+                    background: nutritionSub === sub.id ? "#1f2225" : "transparent",
+                    color: nutritionSub === sub.id ? "#e8e6e1" : "#555",
+                    border: `1px solid ${nutritionSub === sub.id ? "#3a3d43" : "#1f2225"}`,
+                    borderRadius: "4px",
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    letterSpacing: "1px",
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                  }}
+                >
+                  {sub.label}
+                </button>
+              ))}
+            </div>
+
+            {/* MEALS Sub-View */}
+            {nutritionSub === "meals" && (
+              <div>
+                {mealPlan.days.map((day, dayIdx) => {
+                  const dayTotalCal = day.meals.reduce((s, m) => s + m.cal, 0);
+                  const dayTotalProtein = day.meals.reduce((s, m) => s + m.protein, 0);
+                  return (
+                    <div key={dayIdx} style={{
+                      background: "#13151a",
+                      borderRadius: "8px",
+                      border: "1px solid #1f2225",
+                      marginBottom: "8px",
+                      overflow: "hidden",
+                    }}>
+                      <div style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "12px 14px",
+                        background: "#16181d",
+                        borderBottom: "1px solid #1f2225",
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <span style={{ fontFamily: "'Space Grotesk'", fontSize: "14px", fontWeight: 700, color: nutPhase.color, width: "28px" }}>
+                            {day.day}
+                          </span>
+                          <span style={{ fontSize: "12px", fontWeight: 500, color: "#ccc" }}>{day.label}</span>
+                          <span style={{
+                            background: day.type === "training" ? "#2a1f3d" : "#1f2d22",
+                            color: day.type === "training" ? "#c59dff" : "#6bbd7a",
+                            padding: "2px 8px",
+                            borderRadius: "3px",
+                            fontSize: "9px",
+                            fontWeight: 700,
+                            letterSpacing: "1px",
+                          }}>
+                            {day.type === "training" ? "TRAINING" : "REST"}
+                          </span>
+                        </div>
+                        <div style={{ display: "flex", gap: "12px", fontSize: "10px" }}>
+                          <span style={{ color: "#e85d26" }}>{dayTotalCal} kcal</span>
+                          <span style={{ color: "#5db8e8" }}>{dayTotalProtein}g P</span>
+                        </div>
+                      </div>
+
+                      <div style={{ padding: "4px 0" }}>
+                        {day.meals.map((meal, mealIdx) => {
+                          const mKey = `${isCutting ? "c" : "b"}-${dayIdx}-${mealIdx}`;
+                          const isChecked = checkedMeals[mKey];
+                          return (
+                            <div
+                              key={mealIdx}
+                              onClick={() => setCheckedMeals(prev => ({ ...prev, [mKey]: !prev[mKey] }))}
+                              style={{
+                                display: "flex",
+                                alignItems: "flex-start",
+                                padding: "10px 14px",
+                                cursor: "pointer",
+                                opacity: isChecked ? 0.45 : 1,
+                                transition: "all 0.15s",
+                                borderBottom: mealIdx < day.meals.length - 1 ? "1px solid #1a1c20" : "none",
+                              }}
+                            >
+                              <div style={{
+                                width: "14px", height: "14px", borderRadius: "3px",
+                                border: `1.5px solid ${isChecked ? "#6bbd7a" : "#3a3d43"}`,
+                                background: isChecked ? "#6bbd7a" : "transparent",
+                                marginRight: "10px", marginTop: "2px", flexShrink: 0,
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                fontSize: "9px", color: "#fff",
+                              }}>
+                                {isChecked && "✓"}
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "3px" }}>
+                                  <span style={{ fontSize: "10px", color: "#555", fontWeight: 600, width: "38px" }}>{meal.time}</span>
+                                  <span style={{ fontSize: "11px", fontWeight: 600, color: isChecked ? "#666" : "#ddd" }}>{meal.name}</span>
+                                  <div style={{ display: "flex", gap: "3px" }}>
+                                    {meal.tags.map(tag => (
+                                      <span key={tag} style={{
+                                        fontSize: "8px",
+                                        padding: "1px 5px",
+                                        borderRadius: "2px",
+                                        background: tag === "vegan" ? "#1a2d1a" : tag === "vegetarisch" ? "#1f2d2a" : tag === "fisch" ? "#1a2535" : "#2d1f1a",
+                                        color: tag === "vegan" ? "#6bbd7a" : tag === "vegetarisch" ? "#5dbda0" : tag === "fisch" ? "#5db8e8" : "#e8a05d",
+                                        fontWeight: 600,
+                                        letterSpacing: "0.5px",
+                                      }}>
+                                        {tag.toUpperCase()}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                                <div style={{
+                                  fontSize: "11px",
+                                  color: isChecked ? "#555" : "#aaa",
+                                  lineHeight: 1.5,
+                                  textDecoration: isChecked ? "line-through" : "none",
+                                }}>
+                                  {meal.items}
+                                </div>
+                              </div>
+                              <div style={{ display: "flex", gap: "10px", flexShrink: 0, marginLeft: "8px" }}>
+                                <div style={{ textAlign: "right" }}>
+                                  <div style={{ fontSize: "12px", fontWeight: 600, color: isChecked ? "#444" : "#e85d26" }}>{meal.cal}</div>
+                                  <div style={{ fontSize: "8px", color: "#555" }}>KCAL</div>
+                                </div>
+                                <div style={{ textAlign: "right" }}>
+                                  <div style={{ fontSize: "12px", fontWeight: 600, color: isChecked ? "#444" : "#5db8e8" }}>{meal.protein}g</div>
+                                  <div style={{ fontSize: "8px", color: "#555" }}>PROT</div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* TIPS Sub-View */}
+            {nutritionSub === "tips" && (
+              <div>
+                <div style={{
+                  background: "#13151a",
+                  borderRadius: "8px",
+                  border: "1px solid #1f2225",
+                  padding: "16px",
+                  marginBottom: "12px",
+                }}>
+                  <div style={{ fontSize: "10px", color: nutPhase.color, letterSpacing: "2px", fontWeight: 700, marginBottom: "12px" }}>
+                    {isCutting ? "REGELN FÜR DIE DEFIZIT-PHASE" : "REGELN FÜR DIE AUFBAUPHASE"}
+                  </div>
+                  {mealPlan.tips.map((tip, i) => (
+                    <div key={i} style={{
+                      display: "flex",
+                      gap: "10px",
+                      padding: "8px 0",
+                      borderBottom: i < mealPlan.tips.length - 1 ? "1px solid #1a1c20" : "none",
+                    }}>
+                      <span style={{ color: nutPhase.color, fontWeight: 700, fontSize: "12px", flexShrink: 0 }}>{i + 1}.</span>
+                      <span style={{ fontSize: "12px", color: "#bbb", lineHeight: 1.6 }}>{tip}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Meal timing guide */}
+                <div style={{
+                  background: "#13151a",
+                  borderRadius: "8px",
+                  border: "1px solid #1f2225",
+                  padding: "16px",
+                  marginBottom: "12px",
+                }}>
+                  <div style={{ fontSize: "10px", color: "#e8c95d", letterSpacing: "2px", fontWeight: 700, marginBottom: "12px" }}>
+                    MEAL TIMING — TRAININGSTAGE
+                  </div>
+                  {[
+                    { time: "Morgens", rule: "Komplexe Carbs + Protein für stabile Energie den ganzen Tag", icon: "☀" },
+                    { time: "2-3h vor Training", rule: "Leichte Mahlzeit mit Carbs. Kein schweres Fett — verzögert Verdauung", icon: "⏱" },
+                    { time: "30min vor Training", rule: "Optional: Kaffee + kleine schnelle Carbs (Banane, Reiswaffel)", icon: "⚡" },
+                    { time: "0-60min nach Training", rule: "30-40g Protein + schnelle Carbs (Shake + Obst). Das Fenster nutzen!", icon: "🎯" },
+                    { time: "Abends", rule: "Letzte Mahlzeit: Casein/Quark für Protein über Nacht. Nicht zu spät essen (2h vor Schlaf)", icon: "🌙" },
+                  ].map((item, i) => (
+                    <div key={i} style={{
+                      display: "flex", gap: "10px", padding: "8px 0", alignItems: "flex-start",
+                      borderBottom: i < 4 ? "1px solid #1a1c20" : "none",
+                    }}>
+                      <span style={{ fontSize: "16px", flexShrink: 0, width: "24px" }}>{item.icon}</span>
+                      <div>
+                        <div style={{ fontSize: "11px", fontWeight: 600, color: "#e8c95d", marginBottom: "2px" }}>{item.time}</div>
+                        <div style={{ fontSize: "11px", color: "#999", lineHeight: 1.5 }}>{item.rule}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Vegetarian protein sources */}
+                <div style={{
+                  background: "#13151a",
+                  borderRadius: "8px",
+                  border: "1px solid #1f2225",
+                  padding: "16px",
+                  marginBottom: "12px",
+                }}>
+                  <div style={{ fontSize: "10px", color: "#5db8e8", letterSpacing: "2px", fontWeight: 700, marginBottom: "12px" }}>
+                    TOP VEGETARISCHE PROTEINQUELLEN
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px" }}>
+                    {[
+                      { name: "Rote Linsen (gekocht)", per100: "9g", note: "Super in Dal und Suppen" },
+                      { name: "Kichererbsen", per100: "9g", note: "Hummus, Curry, Salat" },
+                      { name: "Tofu (fest)", per100: "15g", note: "Mariniert am besten" },
+                      { name: "Tempeh", per100: "19g", note: "Fermentiert, nussig" },
+                      { name: "Skyr / Griech. Joghurt", per100: "10g", note: "Perfekter Snack" },
+                      { name: "Quark (Mager)", per100: "13g", note: "Casein für die Nacht" },
+                      { name: "Hüttenkäse", per100: "12g", note: "Vielseitig" },
+                      { name: "Eier", per100: "13g", note: "2 Eier ≈ 14g Protein" },
+                      { name: "Edamame", per100: "11g", note: "Bester Snack" },
+                      { name: "Schwarze Bohnen", per100: "9g", note: "Burritos, Chili" },
+                      { name: "Haferflocken", per100: "13g", note: "Auch eine Proteinquelle!" },
+                      { name: "Erdnussbutter", per100: "25g", note: "Fett beachten!" },
+                    ].map((src, i) => (
+                      <div key={i} style={{
+                        background: "#0d0f11",
+                        borderRadius: "4px",
+                        padding: "8px 10px",
+                        border: "1px solid #1a1c20",
+                      }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontSize: "11px", fontWeight: 500, color: "#ccc" }}>{src.name}</span>
+                          <span style={{ fontSize: "11px", fontWeight: 700, color: "#5db8e8" }}>{src.per100}</span>
+                        </div>
+                        <div style={{ fontSize: "9px", color: "#666", marginTop: "2px" }}>{src.note} · pro 100g</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Supplements */}
+                <div style={{
+                  background: "#13151a",
+                  borderRadius: "8px",
+                  border: "1px solid #1f2225",
+                  padding: "16px",
+                }}>
+                  <div style={{ fontSize: "10px", color: "#c59dff", letterSpacing: "2px", fontWeight: 700, marginBottom: "12px" }}>
+                    EMPFOHLENE SUPPLEMENTS
+                  </div>
+                  {[
+                    { name: "Kreatin Monohydrat", dose: "5g/Tag", priority: "Sehr hoch", desc: "Einziges wirklich evidenzbasiertes Supplement für Kraft. Täglich, Timing egal. ~1-2kg Wassereinlagerung ist normal." },
+                    { name: "Proteinpulver", dose: "1-2 Shakes/Tag", priority: "Hoch", desc: "Whey oder Erbsenprotein. Kein Muss, aber macht es leichter auf die Protein-Ziele zu kommen." },
+                    { name: "Vitamin D3", dose: "2000-4000 IE/Tag", priority: "Hoch", desc: "Besonders in Deutschland oft zu niedrig. Wichtig für Knochen, Immunsystem und Kraft." },
+                    { name: "Omega-3 (EPA/DHA)", dose: "2-3g/Tag", priority: "Mittel", desc: "Entzündungshemmend, gut für Gelenke. Algenöl als vegetarische Alternative zu Fischöl." },
+                    { name: "Magnesium", dose: "300-400mg/Tag", priority: "Mittel", desc: "Citrat oder Glycinat abends. Hilft bei Regeneration und Schlaf." },
+                    { name: "Koffein", dose: "2-4mg/kg vor Training", priority: "Optional", desc: "Bewiesener Performance-Booster. Besonders nützlich im Defizit." },
+                  ].map((supp, i) => (
+                    <div key={i} style={{
+                      padding: "10px 0",
+                      borderBottom: i < 5 ? "1px solid #1a1c20" : "none",
+                    }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span style={{ fontSize: "12px", fontWeight: 600, color: "#ddd" }}>{supp.name}</span>
+                          <span style={{
+                            fontSize: "8px", padding: "1px 6px", borderRadius: "2px",
+                            background: supp.priority === "Sehr hoch" ? "#2d1f1a" : supp.priority === "Hoch" ? "#1f2d2a" : "#1f2025",
+                            color: supp.priority === "Sehr hoch" ? "#e85d26" : supp.priority === "Hoch" ? "#6bbd7a" : "#888",
+                            fontWeight: 700, letterSpacing: "0.5px",
+                          }}>
+                            {supp.priority.toUpperCase()}
+                          </span>
+                        </div>
+                        <span style={{ fontSize: "10px", color: "#c59dff", fontWeight: 600 }}>{supp.dose}</span>
+                      </div>
+                      <div style={{ fontSize: "11px", color: "#888", lineHeight: 1.5 }}>{supp.desc}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* SHOPPING Sub-View */}
+            {nutritionSub === "shopping" && (
+              <div>
+                <div style={{ fontSize: "11px", color: "#888", marginBottom: "14px", lineHeight: 1.6 }}>
+                  Wöchentliche Einkaufsliste für die {isCutting ? "Defizit" : "Aufbau"}-Phase. Mengen für 1 Person.
+                </div>
+                {Object.entries(SHOPPING_LIST.hypertrophy).map(([category, items]) => (
+                  <div key={category} style={{
+                    background: "#13151a",
+                    borderRadius: "8px",
+                    border: "1px solid #1f2225",
+                    marginBottom: "8px",
+                    overflow: "hidden",
+                  }}>
+                    <div style={{
+                      padding: "10px 14px",
+                      background: "#16181d",
+                      borderBottom: "1px solid #1f2225",
+                      fontSize: "10px",
+                      color: "#e85d26",
+                      fontWeight: 700,
+                      letterSpacing: "1.5px",
+                    }}>
+                      {category.toUpperCase()}
+                    </div>
+                    <div style={{ padding: "4px 0" }}>
+                      {items.map((item, i) => {
+                        const sKey = `shop-${category}-${i}`;
+                        const isChecked = checkedMeals[sKey];
+                        return (
+                          <div
+                            key={i}
+                            onClick={() => setCheckedMeals(prev => ({ ...prev, [sKey]: !prev[sKey] }))}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "7px 14px",
+                              cursor: "pointer",
+                              borderBottom: i < items.length - 1 ? "1px solid #1a1c20" : "none",
+                              opacity: isChecked ? 0.4 : 1,
+                              transition: "all 0.15s",
+                            }}
+                          >
+                            <div style={{
+                              width: "14px", height: "14px", borderRadius: "3px",
+                              border: `1.5px solid ${isChecked ? "#6bbd7a" : "#3a3d43"}`,
+                              background: isChecked ? "#6bbd7a" : "transparent",
+                              marginRight: "10px", flexShrink: 0,
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                              fontSize: "9px", color: "#fff",
+                            }}>
+                              {isChecked && "✓"}
+                            </div>
+                            <span style={{
+                              fontSize: "11px",
+                              color: isChecked ? "#666" : "#ccc",
+                              textDecoration: isChecked ? "line-through" : "none",
+                            }}>
+                              {item}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          );
+        })()}
+
+        {/* PROGRESS VIEW */}
+        {view === "progress" && (
+          <div>
+            <h2 style={{ fontFamily: "'Space Grotesk'", fontSize: "18px", fontWeight: 600, color: "#e85d26", margin: "0 0 8px" }}>
+              Wöchentliches Tracking
+            </h2>
+            <p style={{ fontSize: "12px", color: "#888", margin: "0 0 20px", lineHeight: 1.6 }}>
+              Trage jede Woche deine Werte ein. So siehst du den Fortschritt über die 12 Wochen.
+            </p>
+
+            {/* Weekly Input Grid */}
+            <div style={{
+              background: "#13151a",
+              borderRadius: "8px",
+              border: "1px solid #1f2225",
+              overflow: "hidden",
+              marginBottom: "24px",
+            }}>
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "50px 1fr 1fr 1fr 1fr",
+                gap: "0",
+                fontSize: "9px",
+                color: "#666",
+                letterSpacing: "1px",
+                fontWeight: 700,
+                padding: "10px 12px",
+                background: "#16181d",
+                borderBottom: "1px solid #1f2225",
+              }}>
+                <div>WO</div>
+                <div>GEWICHT (kg)</div>
+                <div>PULL-UP +kg</div>
+                <div>HANG 20mm (s)</div>
+                <div>NOTIZEN</div>
+              </div>
+              {Array.from({ length: 12 }, (_, i) => {
+                const w = i + 1;
+                const phase = getPhaseForWeek(w);
+                const wd = weeklyData[w] || {};
+                return (
+                  <div key={w} style={{
+                    display: "grid",
+                    gridTemplateColumns: "50px 1fr 1fr 1fr 1fr",
+                    gap: "6px",
+                    padding: "6px 12px",
+                    borderBottom: "1px solid #1a1c20",
+                    alignItems: "center",
+                  }}>
+                    <div style={{
+                      fontSize: "11px",
+                      fontWeight: 600,
+                      color: phase.color,
+                    }}>
+                      W{w}
+                    </div>
+                    {["bodyweight", "pullupMax", "hangMax"].map(field => (
+                      <input
+                        key={field}
+                        type="text"
+                        placeholder="—"
+                        value={wd[field] || ""}
+                        onChange={e => handleWeeklyDataChange(w, field, e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "5px 6px",
+                          background: "#0d0f11",
+                          border: "1px solid #1f2225",
+                          borderRadius: "3px",
+                          color: "#e8e6e1",
+                          fontSize: "11px",
+                          fontFamily: "inherit",
+                          textAlign: "center",
+                        }}
+                      />
+                    ))}
+                    <input
+                      type="text"
+                      placeholder="—"
+                      value={wd.notes || ""}
+                      onChange={e => handleWeeklyDataChange(w, "notes", e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "5px 6px",
+                        background: "#0d0f11",
+                        border: "1px solid #1f2225",
+                        borderRadius: "3px",
+                        color: "#e8e6e1",
+                        fontSize: "11px",
+                        fontFamily: "inherit",
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Progress Charts */}
+            {hasProgress && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                {[
+                  { key: "gewicht", label: "KÖRPERGEWICHT", color: "#e85d26", unit: "kg" },
+                  { key: "pullup", label: "WEIGHTED PULL-UP", color: "#5db8e8", unit: "kg" },
+                  { key: "hangMax", label: "MAX HANG 20MM", color: "#e8c95d", unit: "s" },
+                ].map(chart => {
+                  const hasData = progressData.some(d => d[chart.key]);
+                  if (!hasData) return null;
+                  return (
+                    <div key={chart.key} style={{
+                      background: "#13151a",
+                      borderRadius: "8px",
+                      border: "1px solid #1f2225",
+                      padding: "16px",
+                    }}>
+                      <div style={{ fontSize: "9px", color: chart.color, letterSpacing: "2px", fontWeight: 700, marginBottom: "12px" }}>
+                        {chart.label} ({chart.unit})
+                      </div>
+                      <SvgLineChart data={progressData} dataKey={chart.key} color={chart.color} />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {!hasProgress && (
+              <div style={{
+                textAlign: "center",
+                padding: "40px 20px",
+                color: "#555",
+                fontSize: "12px",
+              }}>
+                <div style={{ fontSize: "28px", marginBottom: "12px" }}>📊</div>
+                Trage oben deine wöchentlichen Werte ein,<br />
+                um Fortschritts-Graphen zu sehen.
+              </div>
+            )}
+
+            {/* End Assessment Comparison */}
+            {assessment.bodyweight && weeklyData[12]?.bodyweight && (
+              <div style={{
+                background: "#13151a",
+                borderRadius: "8px",
+                border: "1px solid #2a5a3a",
+                padding: "16px",
+                marginTop: "20px",
+              }}>
+                <div style={{ fontSize: "10px", color: "#6bbd7a", letterSpacing: "2px", fontWeight: 700, marginBottom: "12px" }}>
+                  ◈ VORHER → NACHHER
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
+                  {[
+                    { label: "Gewicht", before: assessment.bodyweight, after: weeklyData[12]?.bodyweight, unit: "kg" },
+                    { label: "Pull-up +kg", before: assessment.weightedPullup, after: weeklyData[12]?.pullupMax, unit: "kg" },
+                    { label: "Hang 20mm", before: assessment.maxHangTime, after: weeklyData[12]?.hangMax, unit: "s" },
+                  ].map(comp => {
+                    const diff = comp.after && comp.before ? (parseFloat(comp.after) - parseFloat(comp.before)).toFixed(1) : null;
+                    return (
+                      <div key={comp.label} style={{
+                        background: "#0d0f11",
+                        borderRadius: "6px",
+                        padding: "12px",
+                        textAlign: "center",
+                      }}>
+                        <div style={{ fontSize: "9px", color: "#666", letterSpacing: "1px", marginBottom: "6px" }}>{comp.label}</div>
+                        <div style={{ fontSize: "11px", color: "#888" }}>
+                          {comp.before || "—"} → <span style={{ color: "#e8e6e1", fontWeight: 600 }}>{comp.after || "—"}</span>
+                        </div>
+                        {diff && (
+                          <div style={{
+                            fontSize: "12px",
+                            fontWeight: 700,
+                            color: parseFloat(diff) > 0 ? "#6bbd7a" : "#e85d26",
+                            marginTop: "4px",
+                          }}>
+                            {parseFloat(diff) > 0 ? "+" : ""}{diff} {comp.unit}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* GLOSSARY VIEW */}
+        {view === "glossary" && (
+          <div>
+            <div style={{ marginBottom: "24px" }}>
+              <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "18px", fontWeight: 600, color: "#e85d26", margin: "0 0 8px" }}>
+                Legende & Glossar
+              </h2>
+              <p style={{ fontSize: "12px", color: "#888", margin: 0, lineHeight: 1.6 }}>
+                Alle Fachbegriffe, Übungen und Abkürzungen aus dem Trainingsplan erklärt.
+              </p>
+            </div>
+
+            {GLOSSARY.map(section => (
+              <div key={section.category} style={{ marginBottom: "24px" }}>
+                <div style={{
+                  fontSize: "10px",
+                  color: section.color,
+                  letterSpacing: "2px",
+                  fontWeight: 700,
+                  marginBottom: "10px",
+                  paddingBottom: "6px",
+                  borderBottom: `1px solid ${section.color}25`,
+                }}>
+                  {section.category.toUpperCase()}
+                </div>
+                {section.entries.map((entry, idx) => (
+                  <div key={idx} style={{
+                    padding: "10px 14px",
+                    background: "#13151a",
+                    borderRadius: "6px",
+                    marginBottom: "4px",
+                    border: "1px solid #1f2225",
+                  }}>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: "8px", marginBottom: "4px" }}>
+                      <span style={{
+                        fontFamily: "'Space Grotesk', sans-serif",
+                        fontSize: "13px",
+                        fontWeight: 600,
+                        color: section.color,
+                      }}>
+                        {entry.term}
+                      </span>
+                      {entry.full && (
+                        <span style={{ fontSize: "10px", color: "#666", fontStyle: "italic" }}>
+                          ({entry.full})
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#aaa", lineHeight: 1.6 }}>
+                      {entry.desc}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      </>}
+    </div>
+  );
+}
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(React.createElement(App));
+  </script>
+</body>
+</html>
